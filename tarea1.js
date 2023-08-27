@@ -1,27 +1,16 @@
+const { error } = require('console');
+const fs = require('fs');
 
 
 class ProductManager {
     constructor(){
         this.productos = [];
-        
+        this.getProducts();
     }
+
 
     static id = 0
 
-    getProducts(){
-        return this.productos
-    }
-
-    getProductsById(id){
-        const idFilter = this.productos.find(producto => producto.id === id)
-        if(idFilter){
-            console.log("Producto encontrado", idFilter)
-        } else {
-            console.log("NOT FOUND")
-            return;
-        }
-    }
-    
     addProduct(title, description, price, thumbnail, code, stock) {
 
         if(!title || !description || !price || !thumbnail || !code || !stock){
@@ -47,8 +36,42 @@ class ProductManager {
         }
         this.productos.push(newProduct)
         
-        /* console.log(newProduct) */
+    }
 
+    guardarProductosEnArchivoNuevo() {
+        const productosAString = JSON.stringify(this.productos, null, 2);
+        try{
+            fs.writeFile("productos.txt", productosAString, "utf-8", (error) =>{
+                if(error){
+                    console.log("error al crear archivo", error)
+                } else {
+                    console.log("archivo creado con exito")
+                }
+            })
+        } catch (error){
+            console.log("explota todo", error)
+        }
+    }
+
+    getProductsById(id){
+        const idFilter = this.productos.find(producto => producto.id === id)
+        if(idFilter){
+            console.log("Producto encontrado", idFilter)
+        } else {
+            console.log("NOT FOUND")
+            return;
+        }
+    }
+    
+    getProducts(){
+        try {
+            const datos = fs.readFileSync("productos.txt", "utf-8");
+            const productosParseados = JSON.parse(datos);
+            this.productos = productosParseados;
+            console.log("Productos cargados archivo productos.txt");
+        } catch (error) {
+            console.log("Error al cargar productos", error);
+        }
     }
 }
 
@@ -59,8 +82,8 @@ productManager.addProduct("pantalon", "talla XL", 1000, "./pantalonimg.jpg", "co
 productManager.addProduct("zapatilla", "talla 41", 10000, "./zapatillaimg.jpg", "codigo3", )
 productManager.addProduct("poleron", "talla XL", 8500, "./poleronimg.jpg", "codigo1", 15)
 
-const productos = productManager.getProducts();
-console.log("Lista de productos:", productos);
-
+productManager.guardarProductosEnArchivoNuevo()
+console.log("Lista de productos:", productManager.productos);
 productManager.getProductsById(1);
 productManager.getProductsById(3);
+

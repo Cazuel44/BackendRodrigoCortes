@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "title": "polera",
+    "description": "talla L",
+    "price": 1500,
+    "thumbnail": "./poleraimg.jpg",
+    "code": "codigo1",
+    "stock": 8
+  },
+  {
+    "id": 2,
+    "title": "pantalon",
+    "description": "talla XL",
+    "price": 1000,
+    "thumbnail": "./pantalonimg.jpg",
+    "code": "codigo2",
+    "stock": 10
+  }
+]
