@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="./index.css">
+    <title>Document</title>
+</head>
+<body>
+
+
+    <h1>Formulario de mascotas</h1>
+    <div class="formularioIndex">
+        <form action="/pets" method="post">
+            <label for="nombreMascota">Nombre de la mascota</label>
+            <input type="text" id="nombreMascota" name="name" required>
+            <label for="razaMascota">Raza de la mascota</label>
+            <input type="text" id="razaMascota" name="raza" required>
+            <label for="edadMascota">Edad de la mascota</label>
+            <input type="number" id="edadMascota" name="edad" required>
+            
+            <button type="submit">Agregar mascota</button>
+
+        </form> 
+    </div>
+    
+
+    <h1>Formulario de usuarios</h1>
+    <div>
+        <form action="/users" method="post">
+            <label for="nombrePersona">Nombre del usuario</label>
+            <input type="text" name="nombre" id="nombrePersona" required>
+            <label for="apellidoPersona">Apellido del usuario</label>
+            <input type="text" id="apellidoPersona" name="apellido" required>
+            <label for="edadPersona">Edad del usuario</label>
+            <input type="number" id="edadPersona" name="edad" required>
+
+            <button type="submit">Agregar usuario</button>
+
+        </form>
+    </div>
+
+
+</body>
+</html>

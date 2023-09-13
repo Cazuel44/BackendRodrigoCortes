@@ -1,35 +1,79 @@
 const express = require("express")
-const app = express()
+const path = require("path")
+const cartRouter = require("./routes/cartRouter")
+const productsRouter = require("./routes/productRouter")
+const { isUtf8 } = require("buffer");
+const fs = require("fs")
 const PORT = 8080
+const app = express()
 
-app.use(express.urlencoded({extended:true}))
 
-const productos =[
-    {id:"1", nombre: "Poleron", descripcion: "Puma negro L", precio: 1500, stock: 8},
-    {id:"2", nombre: "Polera", descripcion: "Nike blanco XL", precio: 2500, stock: 5},
-    {id:"3", nombre: "Pantalon", descripcion: "Levis azul M", precio: 3000, stock: 15},
-    {id:"4", nombre: "Buzo", descripcion: "Nike negro L", precio: 2800, stock: 9},
-    {id:"5", nombre: "Short", descripcion: "Adidas plomo L", precio: 2300, stock: 12},
-    {id:"6", nombre: "camisa", descripcion: "LAcoste manga larga XM ", precio: 2000, stock: 7},
-    {id:"7", nombre: "Falda", descripcion: "Adidas azul XS", precio: 3600, stock: 8},
-    {id:"8", nombre: "Poleron", descripcion: "Niker plomo L", precio: 20, stock: 5},
-    {id:"9", nombre: "Polera manga larga", descripcion: "Adidas blanco XL", precio: 4000, stock: 4}
-]
 
-app.get("/products", (request, response)=>{
-    response.send(productos)
+async function crearArchivoJson() {
+    try {
+        const products = fs.existsSync("products.json")  // consultar porque la sintaxis no lleva .promises ej: fs.promises.existync...
+        if(!products){
+            fs.writeFileSync("products.json", JSON.stringify([]))
+            console.log("archivo products.json creado exitosamente")
+        } else {
+            console.log("El archivo products.json ya existe")
+        }
+        const carts = fs.existsSync("carts.json")
+        if(!carts){
+            fs.writeFileSync("carts.json", JSON.stringify([]))
+            console.log("archivo carts.json creado exitosamente")
+        } else {
+            console.log("El archivo carts.json ya existe")
+        }
+        
+    } catch (error) {
+        console.log(" Error al crear el archivo", error)
+    }
+}
+
+crearArchivoJson()
+
+
+
+
+
+//MIDDLEWARES
+app.use(express.json())
+app.use(express.urlencoded({extended: true}))
+
+
+//CONFIGURACION CARPETA PUBLICA
+app.use(express.static(path.join(__dirname, "public")))
+
+
+
+//RUTAS
+app.use("/", cartRouter)
+app.use("/", productsRouter)
+
+
+//RUTA PARA SERVIR EL ARCHIVO HTML
+app.get("/", (req, res)=>{
+    res.sendFile(path.join(__dirname, "public", "index.html"))
 })
 
-app.get("/products/:idProduct", (request, response)=>{
-    let idProduct = request.params.idProduct
 
-    let producto = productos.find(producto=> producto.id === idProduct)
-
-    if(!producto) return response.send({error: "Error de producto"})
-    response.send({producto})
-})
 
 app.listen(PORT, ()=>{
-    console.log(`server escuchando en ${PORT}`)
-
+    console.log(`servidor corriendo en puerto ${PORT}`)
 })
+
+
+
+
+// plantilla peticion post 
+/* {
+    "title": "polera puma",
+    "description": "color negro, talla XL",
+    "code": "155",
+    "price": 15000,
+    "status": true,
+    "stock": 5,
+    "category": "poleras",
+    "thumbnails": "rutaimg"
+} */
