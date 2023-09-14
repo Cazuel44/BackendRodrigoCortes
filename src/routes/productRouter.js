@@ -48,10 +48,10 @@ router.get("/products/:pid", (req, res) => {
 router.post("/api/products", (req, res)=>{
     const newProduct = req.body
     newProduct.id = products.length +1;
-    console.log(products)
     products.push(newProduct)
     fs.promises.writeFile("products.json", JSON.stringify(products))
     res.json({message: "Producto agregado"});
+    console.log(products)
 });
 
 // Ruta para actualizar un producto por ID
@@ -109,7 +109,7 @@ router.delete("/products/:id", (req, res)=>{
             
             fs.writeFile(productsArchivo, JSON.stringify(productsData, null, 2), (error) =>{
                 if(error){
-                    res.status(500).json({message: "error al escribir el archivo"})
+                    res.status(500).json({message: "error al escribir el archivo"});
                     return;
                 }
                 res.json({message: "Producto eliminado con exito", deletedProducts})
@@ -118,5 +118,6 @@ router.delete("/products/:id", (req, res)=>{
     }
 });
 
-module.exports = router
-module.exports = products;
+module.exports = router;
+/* module.exports = products; */
+/* module.exports = {products, router}; */

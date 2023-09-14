@@ -1,39 +1,33 @@
 const express = require("express")
 const path = require("path");
 const fs = require("fs")
-const products = require("./products.js");
 const router = express.Router()
 
 
 
 
+
 let carts = []
+let products = []
 
 async function lecturaJson() {
-    const productsArchivo = path.join(__dirname, "../../carts.json");
+    const cartArchivo = path.join(__dirname, "../../carts.json");
+    const productArchivo = path.join(__dirname, "../../products.json");
     
     try {
-        carts = await fs.promises.readFile(productsArchivo, "utf-8")
+        carts = await fs.promises.readFile(cartArchivo, "utf-8")
         carts = JSON.parse(carts)
+        products = await fs.promises.readFile(productArchivo, "utf-8")
+        products = JSON.parse(products)
     } catch (error) {
         if(error.code === "ENOENT") {
-            console.log("El archivo no existe", productsArchivo)
+            console.log("El archivo no existe")
         }
         console.log("error de lectura", error)
     }    
     /* console.log(carts) */
 }
 lecturaJson()
-
-
-
-
-
-
-// traer todos los carritos (incluir limit queriparams)
-router.get("/carts", (req, res)=>{
-    res.json(carts)
-})
 
 
 // traer carrito segun id
@@ -57,7 +51,7 @@ router.post("/api/carts", (req, res)=>{
     newCart.id = carts.length +1;
     carts.push(newCart);
     fs.promises.writeFile("carts.json", JSON.stringify(carts));
-    res.json({message: "Producto agregado"});
+    res.json({message: "Carrito creado"});
     console.log(carts);
 });
 
@@ -71,12 +65,25 @@ router.post("/carts/:cid/product/:pid", (req, res)=>{
         return;
     }
 
-    const producto = products.findIndex((p)=> p.id === producto)
+
+    const producto = products.findIndex((p)=> p.id === productId)
     if(producto === -1){
         res.status(404).json({message: "Producto no encontrado"});
     }
-    const cart = carts[cartId];
-    cart.products.push(productId);
+    
+    const indexProductInCart = carts[carrito].products.findIndex((product)=> product.product === productId)
+    if(indexProductInCart === -1){
+        carts[carrito].products.push({product: productId, quantity: 1});
+        console.log(1)
+    } else{
+        console.log(carts[carrito].products[indexProductInCart])
+        carts[carrito].products[indexProductInCart].quantity++;
+        console.log(2)
+    };
+    
+    fs.promises.writeFile("carts.json", JSON.stringify(carts));
+    res.json({message: "Producto agregado"});
+
 });
 
-module.exports = router
+module.exports = router;
