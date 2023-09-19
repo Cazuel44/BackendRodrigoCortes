@@ -3,10 +3,15 @@ const { isUtf8 } = require("buffer");
 const fs = require("fs")
 const path = require("path");
 const { error } = require("console");
+
+
+
+
+
 const router = express.Router();
-
-
 let products = []
+
+
 async function lecturaJson() {
     const productsArchivo = path.join(__dirname, "../../products.json");
     
@@ -49,6 +54,8 @@ router.post("/api/products", (req, res)=>{
     const newProduct = req.body
     newProduct.id = products.length +1;
     products.push(newProduct)
+    global.io.emit('newProduct', newProduct);
+    
     fs.promises.writeFile("products.json", JSON.stringify(products))
     res.json({message: "Producto agregado"});
     console.log(products)
@@ -95,6 +102,7 @@ router.delete("/products/:id", (req, res)=>{
     if(producto === -1){
         res.status(404).json({ message: "Producto no encontrado" });
     } else {
+        global.io.emit('deleteProduct', productId);
         const deletedProducts = products.splice(producto, 1)[0];
         const productsArchivo = path.join(__dirname, "../../products.json");
 
@@ -119,5 +127,3 @@ router.delete("/products/:id", (req, res)=>{
 });
 
 module.exports = router;
-/* module.exports = products; */
-/* module.exports = {products, router}; */

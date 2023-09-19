@@ -2,12 +2,21 @@ const express = require("express")
 const path = require("path")
 const cartRouter = require("./routes/cartRouter")
 const productsRouter = require("./routes/productRouter")
+const vistaRouter = require("./routes/vistaRouter")
 const { isUtf8 } = require("buffer");
 const fs = require("fs")
-const PORT = 8080
+const socketIo = require("socket.io")
+const {Server} = require("socket.io")
+const http = require("http")
+const handlebars = require('express-handlebars');
+const { error } = require("console");
+
+
 const app = express()
-
-
+const server = http.createServer(app)
+const io = new Server(server)
+global.io = io;
+const PORT = 8080
 
 async function crearArchivoJson() {
     try {
@@ -38,46 +47,49 @@ crearArchivoJson()
 
 
 //MIDDLEWARES
-app.use(express.json())
-app.use(express.urlencoded({extended: true}))
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
 
 
-//CONFIGURACION CARPETA PUBLICA
-app.use(express.static(path.join(__dirname, "public")))
+/* //CONFIGURACION CARPETA PUBLICA
+app.use(express.static(path.join(__dirname, "public"))) */
 
 
 
 //RUTAS
-app.use("/", cartRouter)
-app.use("/", productsRouter) // agruegue al codigo .router (no arroja error al guardar pero si al ejecutar el post)
+app.use("/", cartRouter);
+app.use("/", productsRouter); // agregue al codigo .router (no arroja error al guardar pero si al ejecutar el post)
+app.use("/", vistaRouter);
 
 
 
-//RUTA PARA SERVIR EL ARCHIVO HTML
-app.get("/", (req, res)=>{
-    res.sendFile(path.join(__dirname, "public", "index.html"))
-})
+//Configuración de handlebars
+app.engine("handlebars", handlebars.engine());
+
+//Usa handlebars como motor de plantillas
+app.set("view engine", "handlebars");
+
+//Usa la carpeta views como carpeta de vistas
+app.set("views", __dirname + "/views");
+
+//Archivos dentro de la carpeta public
+app.use(express.static(path.join(__dirname, "public")));
+
+
+io.on('connection', (socket) => {
+    console.log('Cliente conectado');
+  
+    socket.emit('conexion-establecida', 'Conexión exitosa con el servidor de Socket.IO');
+    socket.on('disconnect', () => {
+      console.log('Cliente desconectado');
+    });
+});
 
 
 
-app.listen(PORT, ()=>{
+server.listen(PORT, ()=>{
     console.log(`servidor corriendo en puerto ${PORT}`)
 })
 
 
 
-
-// plantilla peticion post 
-/* {
-    "title": "polera puma",
-    "description": "color negro, talla XL",
-    "code": "155",
-    "price": 15000,
-    "status": true,
-    "stock": 5,
-    "category": "poleras",
-    "thumbnails": "rutaimg"
-} */
-
-// productos creados con postman en caso de que se pierda info
-//{"title":"polera puma","description":"color negro, talla XL","code":"155","price":15000,"status":true,"stock":5,"category":"poleras","thumbnails":"rutaimg","id":1},{"title":"polera adidas","description":"color verde, talla XL","code":"158","price":17000,"status":true,"stock":9,"category":"poleras","thumbnails":"rutaimg","id":2},{"title":"polera volcom","description":"color blanco, talla L","code":"114","price":16000,"status":true,"stock":19,"category":"poleras","thumbnails":"rutaimg","id":3},{"title":"pantalon americanino","description":"color negro, talla XL","code":"120","price":20000,"status":true,"stock":8,"category":"pantalones","thumbnails":"rutaimg","id":4},{"title":"buzo nike","description":"color plomo, talla L","code":"180","price":17000,"status":true,"stock":10,"category":"pantalones","thumbnails":"rutaimg","id":5},{"title":"buzo puma","description":"color negro, talla S","code":"183","price":18000,"status":true,"stock":10,"category":"pantalones","thumbnails":"rutaimg","id":6}
