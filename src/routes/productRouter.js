@@ -3,7 +3,7 @@ const { isUtf8 } = require("buffer");
 const fs = require("fs")
 const path = require("path");
 const { error } = require("console");
-
+const {productModel} = require("../models/products.model")
 
 
 
@@ -29,9 +29,14 @@ async function lecturaJson() {
 lecturaJson()
 
 
-// traer todos los productos (incluir limit queriparams)
-router.get("/products", (req, res)=>{
-    res.json(products);
+// traer todos los productos 
+router.get("/products", async (req, res)=>{
+    const productos = await productModel.find();
+    if(!productos){
+        res.status(404).json({message: "productos no encontrados"});
+    } else {
+        res.json(productos);    
+    } 
 });
 
 
@@ -50,24 +55,45 @@ router.get("/products/:pid", (req, res) => {
 
 
 // Ruta para crear un nuevo producto
-router.post("/api/products", (req, res)=>{
+router.post("/api/products", async (req, res)=>{
     const newProduct = req.body
-    newProduct.id = products.length +1;
+    let {title, description, code, price, stock, category, thumbnails} = req.body
+    if(!title || !description || !code || !price || !stock || !category || !thumbnails){
+        res.send({status: "error", error: "Faltan datos"})
+    }
+    /* newProduct.id = products.length +1; */
     products.push(newProduct)
-    global.io.emit('newProduct', newProduct);
+    /* global.io.emit('newProduct', newProduct); */
     
-    fs.promises.writeFile("products.json", JSON.stringify(products))
+    /* fs.promises.writeFile("products.json", JSON.stringify(products)) */
+    const product = await productModel.create(newProduct)
     res.json({message: "Producto agregado"});
-    console.log(products)
+    console.log(product)
 });
 
+
 // Ruta para actualizar un producto por ID
-router.put("/products/:id", (req, res) => {
-    const productId = parseInt(req.params.id);
-    const producto = products.findIndex((p)=> p.id === productId);
-    if(/* ! */producto === -1){
+router.put("/products/:id", async (req, res) => {
+
+    const productId = req.params.id;
+    try {
+        const updatedProduct = await productModel.findByIdAndUpdate(productId, req.body, { new: true });
+    
+        if (!updatedProduct) {
+          return res.status(404).json({ message: "Producto no encontrado" });
+        }
+        res.json({message: "producto actualizado"});
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error al actualizar el producto" });
+    }
+
+    /* const producto = products.findIndex((p)=> p.id === productId);
+    if(producto === -1){
         res.status(404).json({message: "producto no encontrado"})
     } else {
+        
         const { title, description, code, price, status, stock, category } = req.body;
         const updatedProduct = {...products[producto], title: title || products[producto].title, description: description || products[producto].description, code: code || products[producto].code, price: price || products[producto].price, status: status || products[producto].status, stock: stock || products[producto].stock, category: category || products[producto].category,};
         
@@ -92,13 +118,18 @@ router.put("/products/:id", (req, res) => {
                 res.json(`Producto con ID ${productId} actualizado`);
             });
         });       
-    }  
+    } */  
 });
 
 
-router.delete("/products/:id", (req, res)=>{
-    const productId = parseInt(req.params.id);
-    const producto = products.findIndex((p)=> p.id === productId);
+router.delete("/products/:id", async (req, res)=>{
+    const productId = req.params.id;
+    
+    await productModel.findOneAndDelete({_id: productId})
+    res.json({message: "producto eliminado"});
+    
+    
+    /* const producto = products.findIndex((p)=> p.id === productId);
     if(producto === -1){
         res.status(404).json({ message: "Producto no encontrado" });
     } else {
@@ -123,7 +154,7 @@ router.delete("/products/:id", (req, res)=>{
                 res.json({message: "Producto eliminado con exito", deletedProducts})
             });
         });
-    }
+    } */
 });
 
 module.exports = router;

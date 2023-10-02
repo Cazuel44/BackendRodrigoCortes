@@ -1,6 +1,8 @@
 const express = require("express")
 const path = require("path");
 const fs = require("fs")
+const {cartModel} = require("../models/carts.model")
+
 
 
 const router = express.Router()
@@ -28,9 +30,14 @@ lecturaJson()
 
 
 // traer carrito segun id
-router.get("/carts/:cid", (req, res) => {
-    const cartId = parseInt(req.params.cid);
-    const carrito = carts.find((p)=> p.id === cartId)
+router.get("/carts/:cid", async (req, res) => {
+
+    /* const cartId = parseInt(req.params.cid); */
+    const cartId = req.params.cid;
+    console.log(cartId)
+    const carrito = await cartModel.findById(cartId);
+    console.log(carrito)
+    /* const carrito = carts.find((p)=> p.id === cartId) */
     if(!carrito){
         res.status(404).json({message: "Carrito no encontrado"});
     } else {
@@ -41,15 +48,29 @@ router.get("/carts/:cid", (req, res) => {
     
 });
 
+router.get("/api/carts", async (req, res) => {
+    const carrito = await cartModel.find();
+    if(!carrito){
+        res.status(404).json({message: "Carrito no encontrado"});
+    } else {
+        res.json(carrito);    
+    } 
+});
+
 
 // Ruta para crear un nuevo carrito
-router.post("/api/carts", (req, res)=>{
+router.post("/api/carts", async (req, res)=>{
     const newCart = req.body;
-    newCart.id = carts.length +1;
+    let {description, quantity, total} = req.body
+    if(!description || !quantity || !total){
+        res.send({status: "error", error: "Faltan datos"})
+    }
+    /* newCart.id = carts.length +1; */
     carts.push(newCart);
-    fs.promises.writeFile("carts.json", JSON.stringify(carts));
+    /* fs.promises.writeFile("carts.json", JSON.stringify(carts)); */
+    const cart = await cartModel.create(newCart)
     res.json({message: "Carrito creado"});
-    console.log(carts);
+    console.log(cart);
 });
 
 // Ruta para agregar un producto al arreglo "products" del carrito seleccionado
@@ -81,6 +102,24 @@ router.post("/carts/:cid/product/:pid", (req, res)=>{
     fs.promises.writeFile("carts.json", JSON.stringify(carts));
     res.json({message: "Producto agregado"});
 
+});
+
+router.put("/api/carts/:id", async (req, res)=>{
+    const id = req.params.id; 
+    const newCart = req.body;
+    let {description, quantity, total} = req.body
+    if(!description || !quantity || !total){
+        res.send({status: "error", error: "Faltan datos"})
+    }
+    const cart = await cartModel.findOneAndUpdate({_id: id}, newCart)
+    res.json({message: "Carrito actualizado"});
+    console.log(cart);
+});
+
+router.delete("/api/carts/:id", async (req, res)=>{
+    const id = req.params.id; 
+    await cartModel.findOneAndDelete({_id: id})
+    res.json({message: "Carrito eliminado"});
 });
 
 module.exports = router;

@@ -3,6 +3,7 @@ const path = require("path")
 const cartRouter = require("./routes/cartRouter")
 const productsRouter = require("./routes/productRouter")
 const vistaRouter = require("./routes/vistaRouter")
+const userRouter = require("./routes/usersRouter")
 const { isUtf8 } = require("buffer");
 const fs = require("fs")
 const socketIo = require("socket.io")
@@ -10,6 +11,7 @@ const {Server} = require("socket.io")
 const http = require("http")
 const handlebars = require('express-handlebars');
 const { error } = require("console");
+const {default: mongoose} = require("mongoose")
 
 
 const app = express()
@@ -60,6 +62,7 @@ app.use(express.static(path.join(__dirname, "public"))) */
 app.use("/", cartRouter);
 app.use("/", productsRouter); // agregue al codigo .router (no arroja error al guardar pero si al ejecutar el post)
 app.use("/", vistaRouter);
+app.use("/", userRouter);
 
 
 
@@ -86,10 +89,17 @@ io.on('connection', (socket) => {
 });
 
 
+mongoose.connect("mongodb+srv://rodrigo:Rodrigocoderhouse@cluster0.unz3ypw.mongodb.net/ecommerce?retryWrites=true&w=majority")
+    .then(()=>{
+        console.log("conectado a la base de datos")
+    })
+    .catch(error =>{
+        console.log("error al conectarse a la base de datos", error)
+    })
 
 server.listen(PORT, ()=>{
     console.log(`servidor corriendo en puerto ${PORT}`)
-})
+});
 
 
 
