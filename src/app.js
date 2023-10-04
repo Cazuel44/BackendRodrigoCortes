@@ -14,6 +14,7 @@ const { error } = require("console");
 const {default: mongoose} = require("mongoose")
 
 
+
 const app = express()
 const server = http.createServer(app)
 const io = new Server(server)
@@ -51,6 +52,7 @@ crearArchivoJson()
 //MIDDLEWARES
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+
 
 
 /* //CONFIGURACION CARPETA PUBLICA

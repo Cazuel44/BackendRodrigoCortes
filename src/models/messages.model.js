@@ -7,6 +7,6 @@ const messageSchema = new mongoose.Schema({
     message: {type: String, max: 300, required: true},
 });
 
-const messsageModel = mongoose.model(messagesCollection, messageSchema)
+const messageModel = mongoose.model(messagesCollection, messageSchema)
 
-module.exports = {messsageModel}
+module.exports = {messageModel}
