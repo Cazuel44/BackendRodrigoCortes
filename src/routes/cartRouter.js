@@ -73,7 +73,7 @@ router.post("/api/carts", async (req, res)=>{
     console.log(cart);
 });
 
-// Ruta para agregar un producto al arreglo "products" del carrito seleccionado
+// Ruta para agregar un producto al arreglo "products" del carrito seleccionado de la entrega anterior
 router.post("/carts/:cid/product/:pid", (req, res)=>{ 
     const cartId = parseInt(req.params.cid);
     const productId = parseInt(req.params.pid);
