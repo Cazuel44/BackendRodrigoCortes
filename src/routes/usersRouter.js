@@ -20,7 +20,7 @@ router.get("/users", async(req, res)=>{
 router.post("/api/users", async(req, res)=>{
   let {nombre, apellido, email} = req.body
   if(!nombre || !apellido || !email){
-      res.send({status: "error", error: "Faltan datos"})
+    res.send({status: "error", error: "Faltan datos"})
   }
   let usuario = await userModel.create({nombre, apellido, email})
   res.json({message: "Usuario creado"});
@@ -96,12 +96,12 @@ router.put("/users/:uid", async(req, res)=>{
 
 });
 
-//delete
+//delete eliminar usuario
 
 router.delete("/users/:uid", async(req, res)=>{
-    let {uid} = req.params
-    await userModel.deleteOne({_id: uid});
-    res.json({message: "Usuario eliminado"});
+  let {uid} = req.params
+  await userModel.deleteOne({_id: uid});
+  res.json({message: "Usuario eliminado"});
 });
 
 module.exports = router;
