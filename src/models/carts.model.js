@@ -3,9 +3,10 @@ const mongoose = require("mongoose");
 const cartsCollection = "carts";
 
 const cartSchema = new mongoose.Schema({
-    description: {type: String, max: 50, required: true},
-    quantity: {type: Number, required: true},
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
+    products: [{ type: mongoose.Schema.Types.ObjectId, ref: "products" }],
     total: {type: Number, required: true}
+    
 });
 
 const cartModel = mongoose.model(cartsCollection, cartSchema)

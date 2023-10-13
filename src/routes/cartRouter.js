@@ -2,12 +2,14 @@ const express = require("express")
 const path = require("path");
 const fs = require("fs")
 const {cartModel} = require("../models/carts.model")
+const {productModel} = require("../models/products.model")
 
 
 
 const router = express.Router()
 let carts = []
 let products = []
+
 
 async function lecturaJson() {
     const cartArchivo = path.join(__dirname, "../../carts.json");
@@ -61,24 +63,39 @@ router.get("/api/carts", async (req, res) => {
 // Ruta para crear un nuevo carrito
 router.post("/api/carts", async (req, res)=>{
     const newCart = req.body;
-    let {description, quantity, total} = req.body
-    if(!description || !quantity || !total){
+    let {user, products/* , total */} = req.body
+    if(!user || !products /* || !total */){
         res.send({status: "error", error: "Faltan datos"})
     }
-    /* newCart.id = carts.length +1; */
-    carts.push(newCart);
-    /* fs.promises.writeFile("carts.json", JSON.stringify(carts)); */
-    const cart = await cartModel.create(newCart)
-    res.json({message: "Carrito creado"});
-    console.log(cart);
+
+    try {
+        const productObjects = await productModel.find({ _id: { $in: products } });
+        
+        // Verificar si se encontraron los productos segun el id creado por mongo
+        if (productObjects.length !== products.length) {
+            return res.status(400).json({ status: "error", error: "Algunos productos no existen" });
+        }
+
+        const total = productObjects.reduce((accumulator, product) => accumulator + product.price, 0);
+        console.log("Total:", total);
+
+        newCart.total = total;
+        const cart = await cartModel.create(newCart);
+        res.json({ message: "Carrito creado" });
+        console.log(cart);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error al crear el carrito" });
+    }
+    
 });
 
 // Ruta para agregar un producto al arreglo "products" del carrito seleccionado de la entrega anterior
 router.post("/carts/:cid/product/:pid", (req, res)=>{ 
     const cartId = parseInt(req.params.cid);
     const productId = parseInt(req.params.pid);
-    const carrito = carts.findIndex((p)=> p.id === cartId);
-    if(carrito === -1){
+    const carrito = carts.find((cart)=> cart.id === cartId);
+    if(!carrito) {
         res.status(404).json({message: "Carrito no encontrado"});
         return;
     }
@@ -104,11 +121,12 @@ router.post("/carts/:cid/product/:pid", (req, res)=>{
 
 });
 
+// ruta para actualizar carrito
 router.put("/api/carts/:id", async (req, res)=>{
     const id = req.params.id; 
     const newCart = req.body;
-    let {description, quantity, total} = req.body
-    if(!description || !quantity || !total){
+    let {user, products, total} = req.body
+    if(!user || !products|| !total){
         res.send({status: "error", error: "Faltan datos"})
     }
     const cart = await cartModel.findOneAndUpdate({_id: id}, newCart)
@@ -116,10 +134,49 @@ router.put("/api/carts/:id", async (req, res)=>{
     console.log(cart);
 });
 
+
+//ruta para eliminar carrito
 router.delete("/api/carts/:id", async (req, res)=>{
     const id = req.params.id; 
     await cartModel.findOneAndDelete({_id: id})
     res.json({message: "Carrito eliminado"});
+});
+
+//ruta para eliminar producto de un carrito especifico
+router.delete("/api/carts/:cid/product/:pid", async (req, res)=>{
+
+    try {
+        /* const cartId = req.params.cid.toString();
+        const productId = req.params.pid.toString(); */
+        const cartId = req.params.cid;
+        const productId = req.params.pid;
+
+        const carrito = await cartModel.findById(cartId);
+        if (!carrito) {
+            res.status(404).json({ message: "Carrito no encontrado" });
+            return;
+        }
+        console.log(carrito)
+        /* const productIndex = carrito.products.findIndex((product) => product.product === productId); */
+        const productIndex = await productModel.findById(productId);
+        if (productIndex === -1) {
+            res.status(404).json({ message: "Producto no encontrado en el carrito" });
+            return;
+        }
+        console.log(productIndex)
+
+        carrito.products.splice(productIndex, 1);
+        const total = productObjects.reduce((accumulator, product) => accumulator + product.price, 0);
+        console.log("Total:", total);
+        newCart.total = total;
+
+        await carrito.save();
+        res.json({ message: "Producto eliminado del carrito" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error al eliminar el producto del carrito" });
+    }
+    
 });
 
 module.exports = router;

@@ -8,6 +8,7 @@ const {productModel} = require("../models/products.model")
 
 
 
+
 const router = express.Router();
 let products = []
 
@@ -29,14 +30,39 @@ async function lecturaJson() {
 lecturaJson()
 
 
-// traer todos los productos 
+// traer todos los productos o traer un limite de productos utilizando ?limit=Xcantidad FALTA QUERI EN EL GET
 router.get("/products", async (req, res)=>{
-    const productos = await productModel.find();
-    if(!productos){
+    
+    
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const sortBy = req.query.sortBy || "price";
+        /* const productos = await productModel.find().limit(limit); */
+        
+        const options = {page: page,limit: limit, sort: {[sortBy]: 1}};
+
+        const paginateProducts = await productModel.paginate({}, options);
+        if (!paginateProducts) {
+            res.status(404).json({ message: "Productos no encontrados" });
+        } else {
+            res.json({
+                products: paginateProducts.docs,
+                currentPage: page,
+                totalPages: paginateProducts.totalPages,
+            });
+        }
+        /* if(!productos){
         res.status(404).json({message: "productos no encontrados"});
-    } else {
+        } else {
         res.json(productos);    
-    } 
+        }  */
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error al obtener productos" }, payload);
+    }
+    
+    
 });
 
 
@@ -89,39 +115,10 @@ router.put("/products/:id", async (req, res) => {
         res.status(500).json({ message: "Error al actualizar el producto" });
     }
 
-    /* const producto = products.findIndex((p)=> p.id === productId);
-    if(producto === -1){
-        res.status(404).json({message: "producto no encontrado"})
-    } else {
-        
-        const { title, description, code, price, status, stock, category } = req.body;
-        const updatedProduct = {...products[producto], title: title || products[producto].title, description: description || products[producto].description, code: code || products[producto].code, price: price || products[producto].price, status: status || products[producto].status, stock: stock || products[producto].stock, category: category || products[producto].category,};
-        
-        products[producto] = updatedProduct;
-
-        const productsArchivo = path.join(__dirname, "../../products.json");
-        fs.readFile(productsArchivo, "utf-8", (error, data) =>{
-            if (error) {
-                res.status(500).json({ message: "Error al leer el archivo" });
-                return;
-            }
-
-            const productsData = JSON.parse(data);
-
-            productsData[producto] = updatedProduct;
-
-            fs.writeFile(productsArchivo, JSON.stringify(productsData, null, 2), (error) =>{
-                if(error){
-                    res.status(500).json({message: "error al actualizar el producto"})
-                    return;
-                }
-                res.json(`Producto con ID ${productId} actualizado`);
-            });
-        });       
-    } */  
+   
 });
 
-
+// ruta para eliminar un producto por id
 router.delete("/products/:id", async (req, res)=>{
     const productId = req.params.id;
     
@@ -129,32 +126,6 @@ router.delete("/products/:id", async (req, res)=>{
     res.json({message: "producto eliminado"});
     
     
-    /* const producto = products.findIndex((p)=> p.id === productId);
-    if(producto === -1){
-        res.status(404).json({ message: "Producto no encontrado" });
-    } else {
-        global.io.emit('deleteProduct', productId);
-        const deletedProducts = products.splice(producto, 1)[0];
-        const productsArchivo = path.join(__dirname, "../../products.json");
-
-        fs.readFile(productsArchivo, "utf-8", (error, data) =>{
-            if (error) {
-                res.status(500).json({ message: "Error al leer el archivo" });
-                return;
-            }
-
-            const productsData = JSON.parse(data);
-            productsData.splice(producto, 1);
-            
-            fs.writeFile(productsArchivo, JSON.stringify(productsData, null, 2), (error) =>{
-                if(error){
-                    res.status(500).json({message: "error al escribir el archivo"});
-                    return;
-                }
-                res.json({message: "Producto eliminado con exito", deletedProducts})
-            });
-        });
-    } */
 });
 
 module.exports = router;
