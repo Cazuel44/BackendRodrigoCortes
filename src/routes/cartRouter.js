@@ -37,14 +37,18 @@ router.get("/carts/:cid", async (req, res) => {
     /* const cartId = parseInt(req.params.cid); */
     const cartId = req.params.cid;
     console.log(cartId)
-    const carrito = await cartModel.findById(cartId);
+    const carrito = await cartModel.findById(cartId).populate("products").lean();
+    /* const carrito = await cartModel.findById(cartId).lean(); */
     console.log(carrito)
     /* const carrito = carts.find((p)=> p.id === cartId) */
     if(!carrito){
         res.status(404).json({message: "Carrito no encontrado"});
     } else {
         /* const cart = carts[carrito]; */
-        res.json(carrito);    
+        /*         
+        res.json(carrito); 
+        */
+        res.render("cartDetail", { carrito });   
         console.log(carts);
     }
     
