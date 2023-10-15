@@ -16,7 +16,7 @@ router.get("/users", async(req, res)=>{
 });
 
 //post
-
+// MODIFICAR ESTA RUTA
 router.post("/api/users", async(req, res)=>{
   let {nombre, apellido, email} = req.body
   if(!nombre || !apellido || !email){
@@ -27,6 +27,7 @@ router.post("/api/users", async(req, res)=>{
   console.log(usuario)
 });
 
+//esta ruta guarda el usuario del formulario y el mensaje
 router.post("/saveuserymsge", async (req, res) => {
   const { user, lastName, email, message } = req.body;
   if (!user || !lastName || !email || !message) {
@@ -46,6 +47,8 @@ router.post("/saveuserymsge", async (req, res) => {
     // Crear un nuevo usuario
     const newUser = new userModel({ nombre, apellido, email });
     await newUser.save();
+
+    
     // Crear un nuevo mensaje asociado al usuario
     const newMessage = new messageModel({ user: newUser._id, message: message, });
     await newMessage.save();

@@ -12,6 +12,7 @@ const http = require("http")
 const handlebars = require('express-handlebars');
 const { error } = require("console");
 const {default: mongoose} = require("mongoose")
+const {productModel} = require("./models/products.model")
 
 
 
@@ -61,9 +62,11 @@ app.use(express.static(path.join(__dirname, "public"))) */
 
 
 //RUTAS
+
 app.use("/", cartRouter);
-app.use("/", productsRouter); // agregue al codigo .router (no arroja error al guardar pero si al ejecutar el post)
+app.use("/", productsRouter); 
 app.use("/", vistaRouter);
+app.use("/products", vistaRouter);
 app.use("/", userRouter);
 
 
@@ -80,6 +83,20 @@ app.set("views", __dirname + "/views");
 //Archivos dentro de la carpeta public
 app.use(express.static(path.join(__dirname, "public")));
 
+// funcion para actualizar el quantity de los productos
+/* async function updateProductQuantity() {
+    const products = await productModel.find({});
+    for (const product of products) {
+      if (!product.quantity) {
+        product.quantity = 1; // O el valor predeterminado que desees
+      }
+    }
+  
+    await Promise.all(products.map(product => product.save()));
+    console.log('Actualización de productos completa');
+}
+  
+updateProductQuantity(); */
 
 io.on('connection', (socket) => {
     console.log('Cliente conectado');

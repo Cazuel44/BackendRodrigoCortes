@@ -67,14 +67,20 @@ router.get("/products", async (req, res)=>{
 
 
 // traer producto segun id
-router.get("/products/:pid", (req, res) => {
-    const productId = parseInt(req.params.pid);
-    const producto = products.find((p)=> p.id === productId)
-    if(!producto){      //consultar por condicional /* ! */producto === -1
-        res.status(404).json({message: "Producto no encontrado"})
-    } else {
-        res.json(producto);    
-        console.log(producto)
+router.get("/product/:pid", async (req, res) => {
+    const productId = req.params.pid;
+    try {
+        const producto = await productModel.findOne({ _id: productId }).lean();
+
+        if (!producto) {
+            res.status(404).json({ message: "Producto no encontrado" });
+        } else {
+            res.render("productDetail", { product: producto });
+            console.log(producto);
+        }
+    } catch (error) {
+        console.error("Error al obtener el producto:", error);
+        res.status(500).json({ message: "Error al obtener el producto" });
     }
     
 });

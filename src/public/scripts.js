@@ -55,5 +55,17 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Error al guardar el usuario y el mensaje");
     }
   });
-  
+
+  // busca los botones con clase detalle-buton
+  const detalleButtons = document.querySelectorAll(".detalle-button");
+  // agregar un evenlistener
+  detalleButtons.forEach((button) => {
+    button.addEventListener("click", function (event) {
+      const productId = event.currentTarget.dataset.productId;
+      window.location.href = `/product/${productId}`;
+    });
+
+  }); 
+
 });
+
