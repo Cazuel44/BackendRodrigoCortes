@@ -1,18 +1,20 @@
-const express = require("express")
-const path = require("path")
-const cartRouter = require("./routes/cartRouter")
-const productsRouter = require("./routes/productRouter")
-const vistaRouter = require("./routes/vistaRouter")
-const userRouter = require("./routes/usersRouter")
+const express = require("express");
+const path = require("path");
+const cartRouter = require("./routes/cartRouter");
+const productsRouter = require("./routes/productRouter");
+const vistaRouter = require("./routes/vistaRouter");
+const userRouter = require("./routes/usersRouter");
 const { isUtf8 } = require("buffer");
-const fs = require("fs")
-const socketIo = require("socket.io")
-const {Server} = require("socket.io")
-const http = require("http")
+const fs = require("fs");
+const socketIo = require("socket.io");
+const {Server} = require("socket.io");
+const http = require("http");
 const handlebars = require('express-handlebars');
 const { error } = require("console");
-const {default: mongoose} = require("mongoose")
-const {productModel} = require("./models/products.model")
+const {default: mongoose} = require("mongoose");
+const MongoStore = require("connect-mongo");
+const session = require("express-session");
+const fileStore = require("session-file-store")
 
 
 
@@ -54,11 +56,42 @@ crearArchivoJson()
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
+io.on('connection', (socket) => {
+    console.log('Cliente conectado');
+  
+    socket.emit('conexion-establecida', 'Conexión exitosa con el servidor de Socket.IO');
+    socket.on('disconnect', () => {
+      console.log('Cliente desconectado');
+    });
+});
 
+
+mongoose.connect("mongodb+srv://rodrigo:Rodrigocoderhouse@cluster0.unz3ypw.mongodb.net/ecommerce?retryWrites=true&w=majority")
+    .then(()=>{
+        console.log("conectado a la base de datos")
+    })
+    .catch(error =>{
+        console.log("error al conectarse a la base de datos", error)
+    })
+
+server.listen(PORT, ()=>{
+    console.log(`servidor corriendo en puerto ${PORT}`)
+});
 
 /* //CONFIGURACION CARPETA PUBLICA
 app.use(express.static(path.join(__dirname, "public"))) */
 
+
+// Configuración del middleware de sesión con MongoDB
+app.use(session({
+    store: MongoStore.create({
+        mongoUrl: "mongodb+srv://rodrigo:Rodrigocoderhouse@cluster0.unz3ypw.mongodb.net/ecommerce?retryWrites=true&w=majority",
+        mongoOptions: { useNewUrlParser: true, useUnifiedTopology: true }, ttl: 3500
+    }),
+    secret: "clavesecreta",
+    resave: false,
+    saveUninitialized: true
+}));
 
 
 //RUTAS
@@ -66,7 +99,6 @@ app.use(express.static(path.join(__dirname, "public"))) */
 app.use("/", cartRouter);
 app.use("/", productsRouter); 
 app.use("/", vistaRouter);
-app.use("/products", vistaRouter);
 app.use("/", userRouter);
 
 
@@ -98,27 +130,7 @@ app.use(express.static(path.join(__dirname, "public")));
   
 updateProductQuantity(); */
 
-io.on('connection', (socket) => {
-    console.log('Cliente conectado');
-  
-    socket.emit('conexion-establecida', 'Conexión exitosa con el servidor de Socket.IO');
-    socket.on('disconnect', () => {
-      console.log('Cliente desconectado');
-    });
-});
 
-
-mongoose.connect("mongodb+srv://rodrigo:Rodrigocoderhouse@cluster0.unz3ypw.mongodb.net/ecommerce?retryWrites=true&w=majority")
-    .then(()=>{
-        console.log("conectado a la base de datos")
-    })
-    .catch(error =>{
-        console.log("error al conectarse a la base de datos", error)
-    })
-
-server.listen(PORT, ()=>{
-    console.log(`servidor corriendo en puerto ${PORT}`)
-});
 
 
 

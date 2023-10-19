@@ -22,6 +22,14 @@ router.get("/", async (req, res)=>{
     }
 });
 
+router.get("/register", async (req, res)=>{
+    try {
+        res.render("register");
+    } catch (error) {
+        res.status(500).json({ message: "Error al cargar la página" });
+    }
+});
+
 
 const PRODUCTS_PER_PAGE = 10; 
 
@@ -29,6 +37,8 @@ router.get("/allproducts", async (req, res)=>{
 
     
     try {
+        const nombre = req.session.nombreUsuario;
+        const apellido = req.session.apellidoUsuario;
         const page = parseInt(req.query.page) || 1; // pagina actual y si no se especifica una pagina por defecto es 1
         
 
@@ -43,7 +53,20 @@ router.get("/allproducts", async (req, res)=>{
         const nextPage = page + 1;
         const prevLink = page > 1; // Verifica si hay un enlace "Anterior"
         const nextLink = page < totalPages;
-        res.render("products", { productos: products, page, totalPages, nextPage, prevPage, prevLink, nextLink });
+
+        console.log("Nombre:", nombre);
+        console.log("Apellido:", apellido);
+        res.render("products", { 
+            productos: products,
+            page,
+            totalPages, 
+            nextPage, 
+            prevPage, 
+            prevLink, 
+            nextLink,
+            nombre,
+            apellido 
+        });
     } catch (error) {
         console.error("Error al obtener los productos:", error);
         res.status(500).json({ message: "Error al obtener los productos" });
@@ -53,7 +76,33 @@ router.get("/allproducts", async (req, res)=>{
 });
 
 
+router.get("/login", async (req, res)=>{
+    try{
+        res.render("login",{})
+    } catch (error){
+        console.log("error al acceder a la vista:", error);
+    }
+});
 
+router.get("/profile", async (req, res) => {
+    try {
+      // Asegúrate de tener acceso a los datos necesarios, como el nombre y el email del usuario
+      const nombre = req.session.nombreUsuario;
+      const apellido = req.session.apellidoUsuario;
+      const email = req.session.emailUsuario;
+      const rol = req.session.rolUsuario;
+  
+      // Renderiza la vista profile y pasa los datos como un objeto
+      res.render("profile", {
+        nombre: nombre,
+        apellido: apellido, 
+        email: email,
+        rol: rol
+      });
+    } catch (error) {
+      console.log("Error al acceder a la vista de perfil:", error);
+    }
+  });
 
 
 

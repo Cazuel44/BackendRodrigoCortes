@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="../public/index.css">
     <title>Document</title>
 </head>
 <body>
     <div>
         <h1>Lista de Productos</h1>
+        <h2>Bienvenido: {{nombre}} {{apellido}}</h2> 
+        <h5><a href="/logout">Cerrar sesion</a></h5>
         <ul id="products">
             {{#each productos}}
-            <li id="{{_id}}">
+            <li class="product" id="{{_id}}">
                 <h2>{{title}}</h2>
                 <p>Descripción: {{description}}</p>
                 {{!-- <p>Código: {{code}}</p>
@@ -35,8 +38,6 @@
             <a href="/allproducts?page={{nextPage}}">Siguiente</a>
             {{/if}}
         </div>
-        {{> saludo}}
-        {{> chat}}
 
     <div>
 

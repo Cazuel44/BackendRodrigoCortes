@@ -16,52 +16,108 @@ router.get("/users", async(req, res)=>{
 });
 
 //post
-// MODIFICAR ESTA RUTA
+// ruta para crear usuario mediante postman
 router.post("/api/users", async(req, res)=>{
-  let {nombre, apellido, email} = req.body
-  if(!nombre || !apellido || !email){
-    res.send({status: "error", error: "Faltan datos"})
+  const { nombre, apellido, email, password } = req.body;
+  if (!nombre || !apellido || !email || !password) {
+    return res.status(400).json({ status: "error", error: "Faltan datos" });
   }
-  let usuario = await userModel.create({nombre, apellido, email})
-  res.json({message: "Usuario creado"});
-  console.log(usuario)
+
+  try {
+    const usuario = await userModel.create({ nombre, apellido, email, password });
+    res.json({ message: "Usuario creado", user: usuario });
+    console.log(usuario);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: "error", error: "Error al crear el usuario" });
+  }
 });
 
-//esta ruta guarda el usuario del formulario y el mensaje
-router.post("/saveuserymsge", async (req, res) => {
-  const { user, lastName, email, message } = req.body;
-  if (!user || !lastName || !email || !message) {
+//esta ruta guarda y crea el usuario del formulario y el mensaje (RECORDAR CAMBIO DE RUTA DE /saveusrymsge a register en caso de erro)
+router.post("/Register", async (req, res) => {
+  const { nombre, apellido, email, password, message, rol } = req.body;
+  if (!nombre || !apellido || !email || !password /* || !message */) {
     return res.status(400).json({ status: "error", error: "Faltan datos en los parámetros" });
   }
   console.log(message) // trae correctamente el mensaje 
   console.log(req.body)// trae correctamente el req.body
   try {
-  // Buscar email repetido
-  const existUser = await userModel.findOne({ email });
-  // condicional en caso que si existe correo
-  if (existUser) {
-    const newMessage = new messageModel({ user: existUser._id, message: message });
-    await newMessage.save();
-    res.json({ status: "success", message: "Mensaje guardado con éxito para el usuario existente" });
-  } else {
-    // Crear un nuevo usuario
-    const newUser = new userModel({ nombre, apellido, email });
+    // Buscar email repetido
+    const existUser = await userModel.findOne({ email });
+    // condicional en caso que si existe correo
+    if (existUser) {
+      return res.status(400).json({ status: "error", error: "El usuario ya existe" });
+    }
+
+    // Si el usuario no existe, crea un nuevo usuario con nombre, apellido, email y contraseña
+    const newUser = new userModel({ nombre, apellido, email, password, rol: rol || "user" });
     await newUser.save();
 
+    // Crea un nuevo mensaje asociado al usuario si esque el mensaje existe
+    if (message){
+      const newMessage = new messageModel({ user: newUser._id, message });
+      await newMessage.save();
+    }
     
-    // Crear un nuevo mensaje asociado al usuario
-    const newMessage = new messageModel({ user: newUser._id, message: message, });
-    await newMessage.save();
-    res.json({ status: "success", message: "Usuario y mensaje guardados con éxito" });
-  }
+
+    return res.json({ status: "success", message: "Usuario y mensaje guardados con éxito" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ status: "error", error: "Error al guardar el usuario y el mensaje" });
+    return res.status(500).json({ status: "error", error: "Error al guardar el usuario y el mensaje" });
   }
 });
 
-//put modificar un usuario 
 
+//ruta para ingresar con un usuario
+router.post("/Login", async (req, res) => {
+  try {
+    const email = req.body.email;
+    const password = req.body.password;
+
+    // Buscar un usuario en la base de datos por su email
+    const user = await userModel.findOne({ email });
+
+    if (user) {
+      // Comprobar si la contraseña coincide
+      if (user.password === password) {
+        if (user.rol === "admin") {
+          // Establecer las variables de sesión
+          req.session.emailUsuario = email;
+          req.session.nombreUsuario = user.nombre;
+          req.session.apellidoUsuario = user.apellido;
+          req.session.rolUsuario = user.rol;
+          res.redirect("/profile");
+        } else {
+          req.session.nombreUsuario = user.nombre;
+          req.session.apellidoUsuario = user.apellido;
+          req.session.emailUsuario = email;
+          req.session.rolUsuario = user.rol;
+          res.redirect("/allproducts");
+        }
+      } else {
+        res.redirect("../../login");
+      }
+    } else {
+      // No se encontró un usuario con ese email
+      res.redirect("../../login");
+    }
+  } catch (error) {
+    res.status(500).send("Error al ingresar" + error.message);
+  }
+});
+
+//ruta de desconeccion
+router.get("/logout", async (req, res)=>{
+  req.session.destroy((error)=>{
+    if(error) {
+      return res.json({status:"logout error", body: error })
+    }
+    res.redirect("../../login")
+  }); 
+});
+
+
+//put modificar un usuario 
 router.put("/users/:uid", async(req, res)=>{
   let {uid} = req.params
   const userToReplace = req.body;
@@ -99,8 +155,8 @@ router.put("/users/:uid", async(req, res)=>{
 
 });
 
-//delete eliminar usuario
 
+//delete eliminar usuario
 router.delete("/users/:uid", async(req, res)=>{
   let {uid} = req.params
   await userModel.deleteOne({_id: uid});
