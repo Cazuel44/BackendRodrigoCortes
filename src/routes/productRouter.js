@@ -3,7 +3,7 @@ const { isUtf8 } = require("buffer");
 const fs = require("fs")
 const path = require("path");
 const { error } = require("console");
-const {productModel} = require("../models/products.model")
+const {productModel} = require("../models/products.model.js")
 
 
 

@@ -1,8 +1,8 @@
 const express = require("express")
 const path = require("path");
 const fs = require("fs")
-const {cartModel} = require("../models/carts.model")
-const {productModel} = require("../models/products.model")
+const {cartModel} = require("../models/carts.model.js")
+const {productModel} = require("../models/products.model.js")
 
 
 

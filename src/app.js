@@ -1,9 +1,11 @@
 const express = require("express");
 const path = require("path");
 const cartRouter = require("./routes/cartRouter");
-const productsRouter = require("./routes/productRouter");
-const vistaRouter = require("./routes/vistaRouter");
-const userRouter = require("./routes/usersRouter");
+const productsRouter = require("./routes/productRouter.js");
+const vistaRouter = require("./routes/vistaRouter.js");
+const userRouter = require("./routes/usersRouter.js");
+const sessionRouter = require("./routes/sessionsRouter.js");
+const passporConfig = require("./config/passport.config.js");
 const { isUtf8 } = require("buffer");
 const fs = require("fs");
 const socketIo = require("socket.io");
@@ -14,9 +16,12 @@ const { error } = require("console");
 const {default: mongoose} = require("mongoose");
 const MongoStore = require("connect-mongo");
 const session = require("express-session");
-const fileStore = require("session-file-store")
+const passport = require("passport");
+const fileStore = require("session-file-store");
+const initializePassport = require("./config/passport.config.js");
+const GitHubStrategy = require("passport-github2");
 
-
+initializePassport();
 
 const app = express()
 const server = http.createServer(app)
@@ -95,11 +100,13 @@ app.use(session({
 
 
 //RUTAS
-
+app.use(passport.initialize());
+app.use(passport.session());
 app.use("/", cartRouter);
 app.use("/", productsRouter); 
 app.use("/", vistaRouter);
 app.use("/", userRouter);
+app.use("/", sessionRouter)
 
 
 
@@ -114,6 +121,15 @@ app.set("views", __dirname + "/views");
 
 //Archivos dentro de la carpeta public
 app.use(express.static(path.join(__dirname, "public")));
+
+
+
+
+
+
+
+
+
 
 // funcion para actualizar el quantity de los productos
 /* async function updateProductQuantity() {

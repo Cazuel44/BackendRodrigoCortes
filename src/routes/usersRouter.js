@@ -1,8 +1,11 @@
 const express = require("express")
-const {userModel} = require("../models/users.model")
-const {messageModel} = require("../models/messages.model")
+const {userModel} = require("../models/users.model.js")
+const {messageModel} = require("../models/messages.model.js");
+const { createHash, isValidPassword, generateToken } = require("../utils.js");
 
 const router = express.Router()
+
+
 
 //get 
 
@@ -50,7 +53,7 @@ router.post("/Register", async (req, res) => {
     }
 
     // Si el usuario no existe, crea un nuevo usuario con nombre, apellido, email y contraseña
-    const newUser = new userModel({ nombre, apellido, email, password, rol: rol || "user" });
+    const newUser = new userModel({ nombre, apellido, email, password: createHash(password), rol: rol || "user" });
     await newUser.save();
 
     // Crea un nuevo mensaje asociado al usuario si esque el mensaje existe
@@ -59,8 +62,8 @@ router.post("/Register", async (req, res) => {
       await newMessage.save();
     }
     
-
-    return res.json({ status: "success", message: "Usuario y mensaje guardados con éxito" });
+    const accessToken = generateToken({ user: newUser });// EN ESTA LINEA SE GENERA EL TOKEN PARA EL NUEVO USUARIO
+    return res.json({ status: "success", message: "Usuario registrado con éxito", access_token: accessToken }); //se agrega generate_token
   } catch (error) {
     console.error(error);
     return res.status(500).json({ status: "error", error: "Error al guardar el usuario y el mensaje" });
@@ -78,23 +81,24 @@ router.post("/Login", async (req, res) => {
     const user = await userModel.findOne({ email });
 
     if (user) {
-      // Comprobar si la contraseña coincide
-      if (user.password === password) {
+      // Comprobar si la contraseña coincide utilizando la función isValidPassword
+      if (isValidPassword(user, password)) {
+        // Generar un token de autenticación
+        const token = generateToken(user);
+        console.log("Token generado:", token);
+        // Establecer las variables de sesión
+        req.session.emailUsuario = email;
+        req.session.nombreUsuario = user.nombre;
+        req.session.apellidoUsuario = user.apellido;
+        req.session.rolUsuario = user.rol;
+
         if (user.rol === "admin") {
-          // Establecer las variables de sesión
-          req.session.emailUsuario = email;
-          req.session.nombreUsuario = user.nombre;
-          req.session.apellidoUsuario = user.apellido;
-          req.session.rolUsuario = user.rol;
           res.redirect("/profile");
         } else {
-          req.session.nombreUsuario = user.nombre;
-          req.session.apellidoUsuario = user.apellido;
-          req.session.emailUsuario = email;
-          req.session.rolUsuario = user.rol;
           res.redirect("/allproducts");
         }
       } else {
+        // Contraseña incorrecta
         res.redirect("../../login");
       }
     } else {
@@ -102,7 +106,7 @@ router.post("/Login", async (req, res) => {
       res.redirect("../../login");
     }
   } catch (error) {
-    res.status(500).send("Error al ingresar" + error.message);
+    res.status(500).send("Error al ingresar: " + error.message);
   }
 });
 
@@ -164,3 +168,51 @@ router.delete("/users/:uid", async(req, res)=>{
 });
 
 module.exports = router;
+
+
+
+
+
+
+//ruta para ingresar con un usuario RESPALDOOOO
+/* router.post("/Login", async (req, res) => {
+  try {
+    const email = req.body.email;
+    const password = req.body.password;
+
+    // Buscar un usuario en la base de datos por su email
+    const user = await userModel.findOne({ email });
+
+    if (user) {
+      // Comprobar si la contraseña coincide usando la funcion isvalidpasword
+      if (isValidPassword(user, password)) {
+        if (user.rol === "admin") {
+          // Generar un token de autenticación
+          const token = generateToken(user);
+          // Establecer las variables de sesión
+          req.session.emailUsuario = email;
+          req.session.nombreUsuario = user.nombre;
+          req.session.apellidoUsuario = user.apellido;
+          req.session.rolUsuario = user.rol;
+          res.redirect("/profile");
+        } else {
+          // Generar un token de autenticación
+          const token = generateToken(user);
+          req.session.nombreUsuario = user.nombre;
+          req.session.apellidoUsuario = user.apellido;
+          req.session.emailUsuario = email;
+          req.session.rolUsuario = user.rol;
+          res.redirect("/allproducts");
+        }
+      } else {
+        // datos incorrectos
+        res.redirect("../../login");
+      }
+    } else {
+      // No se encontró un usuario con ese email
+      res.redirect("../../login");
+    }
+  } catch (error) {
+    res.status(500).send("Error al ingresar" + error.message);
+  }
+}); */
