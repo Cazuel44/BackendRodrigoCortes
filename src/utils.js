@@ -24,21 +24,53 @@ const generateToken = (user) => {
     return token
 }
 
-const authToken = (req, res, next) => {
-    const autHeader = req.headers.authorization
-    if (!autHeader) return res.status(401).send({
-        error: "No autorizado"
-    })
 
-    const token = autHeader.split(" ")[1]
+const authToken = (req, res, next) => {
+    const autHeader = req.headers.authorization;
+    const cookieToken = req.cookies.token; // Obtener el token de la cookie
+  
+    // Verificar si se encuentra el token en los encabezados o en las cookies
+    const token = autHeader ? autHeader.split(" ")[1] : cookieToken;
+  
+    if (!token) {
+      return res.status(401).send({
+        error: "No autenticado"
+      });
+    }
+  
+    jwt.verify(token, PRIVATE_KEY, (error, credential) => {
+      if (error) {
+        console.error('Error al verificar el token:', error);
+        return res.status(403).send({ error: "No autorizado" });
+      }
+      req.user = credential.user;
+      next();
+    });
+};
+
+/* 
+    const authToken = (req, res, next) => {
+    const autHeader = req.headers.authorization;
+    
+    console.log(req.cookies)
+    console.log('Token en encabezado de autorización:', autHeader);
+    if (!autHeader) return res.status(401).send({
+        error: "No autenticado"
+    });
+
+    const token = autHeader.split(" ")[1];
+    console.log('Token extraído:', token);
 
     jwt.verify(token, PRIVATE_KEY, (error, credential) => {
-        if (error) return res.status(403).send({ error: "No autorizado" })
-        req.user = credential.user
-        next()
-    })
-
+        if (error) {
+            console.error('Error al verificar el token:', error);
+            return res.status(403).send({ error: "No autorizado" });
+        }
+        req.user = credential.user;
+        next();
+    });
 }
+*/
 
 
 
@@ -47,4 +79,5 @@ module.exports = {
     isValidPassword,
     generateToken,
     authToken,
+    PRIVATE_KEY,
 };

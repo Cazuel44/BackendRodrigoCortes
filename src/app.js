@@ -20,6 +20,7 @@ const passport = require("passport");
 const fileStore = require("session-file-store");
 const initializePassport = require("./config/passport.config.js");
 const GitHubStrategy = require("passport-github2");
+const cookieParser = require("cookie-parser"); //revisar si funciona
 
 initializePassport();
 
@@ -60,6 +61,7 @@ crearArchivoJson()
 //MIDDLEWARES
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+app.use(cookieParser());// revisar si funciona
 
 io.on('connection', (socket) => {
     console.log('Cliente conectado');

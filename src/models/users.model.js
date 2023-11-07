@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, max: 50, required: true },
     password: { type: String, max: 50, required: false }, 
     isGithubAuth: { type: Boolean, default: false, required: false },
+    cartId: { type: mongoose.Schema.Types.ObjectId, ref: 'carts', required: true }, // referenciando cartid a mi coleccion carts UTILIZAR POPULATE!!
     rol: { type: String, enum: ["user", "admin"], default: "user" }
 });
 
