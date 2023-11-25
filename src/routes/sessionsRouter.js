@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get("/github", passport.authenticate("github", { scope: ["user:email"] }), async (req, res) => { });
 
-router.get("/api/sessions/githubcallback", passport.authenticate("github", { failureRedirect: "/loginx" }), (req, res) => {
+router.get("/api/sessions/githubcallback", passport.authenticate("github", { failureRedirect: "/login" }), (req, res) => {
     if (req.isAuthenticated()) {
         const token = generateToken(req.user);
         console.log("Token generado:", token);
@@ -17,7 +17,7 @@ router.get("/api/sessions/githubcallback", passport.authenticate("github", { fai
         req.session.email = req.user.email;
         res.redirect("/allproducts");
     } else {
-        res.redirect("/loginx");
+        res.redirect("/login");
     }
 });
 

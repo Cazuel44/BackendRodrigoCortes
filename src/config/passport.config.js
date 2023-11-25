@@ -3,8 +3,8 @@ const GitHubStrategy = require("passport-github2");
 const local =require("passport-local");
 const JwtStrategy = require("passport-jwt").Strategy;
 const ExtractJwt = require("passport-jwt").ExtractJwt;
-const userService = require("../models/users.model.js")
-const {userModel} = require("../models/users.model.js")
+const userService = require("../dao/models/users.model.js")
+const {userModel} = require("../dao/models/users.model.js")
 const {PRIVATE_KEY} = require("../utils.js");
 
 

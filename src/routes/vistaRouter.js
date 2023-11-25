@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const { error } = require("console");
 const handlebars = require('express-handlebars');
-const {productModel} = require("../models/products.model.js");
+const {productModel} = require("../dao/models/products.model.js");
 const { authToken } = require("../utils.js"); 
 
 
