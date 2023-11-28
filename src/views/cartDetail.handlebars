@@ -9,10 +9,10 @@
     <h1>Detalles del Carrito</h1>
     <div>
         
-    {{#if carrito}}
+    {{#if cart}}
         <h2>Productos en el carrito:</h2>
         <ul>
-            {{#each carrito.products}}
+            {{#each cart.products}}
                 <li>{{this.title}} - Precio: {{this.price}}</li>
             {{/each}}
         </ul>

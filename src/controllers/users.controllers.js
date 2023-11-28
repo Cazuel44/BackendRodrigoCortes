@@ -1,7 +1,20 @@
-const {userModel} = require("../dao/models/users.model");
-const {cartModel} = require("../dao/models/carts.model.js");
-const {messageModel} = require("../dao/models/messages.model.js");
+const {userModel} = require("../dao/mongo/models/users.model.js");
+const {cartModel} = require("../dao/mongo/models/carts.model.js");
+const {messageModel} = require("../dao/mongo/models/messages.model.js");
 const { createHash, isValidPassword, generateToken, authToken } = require('../utils');
+const UserDTO = require("../dao/DTOs/user.dto.js");
+const UserDao = require("../dao/mongo/users.mongo.js");
+
+const userDao = new UserDao();
+
+
+async function getUserByEmail(email) {
+  // Aquí debes escribir la lógica para buscar un usuario por su correo electrónico en la base de datos
+  // Puedes usar un modelo de Mongoose para interactuar con tu base de datos
+  const user = await userModel.findOne({ email }); // Suponiendo que tienes un modelo llamado 'User'
+
+  return user; // Devuelves el usuario encontrado (o null si no se encontró)
+}
 
 // obtener todos los usuarios
 async function getAllUsers(req, res) {
@@ -11,6 +24,20 @@ async function getAllUsers(req, res) {
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Error al obtener usuarios" });
+  }
+}
+
+async function getUserById(req, res) {
+  const { uid } = req.params;
+  try {
+    const user = await userModel.findById(uid);
+    if (!user) {
+      return res.status(404).json({ status: "error", error: "Usuario no encontrado" });
+    }
+    res.json({ status: "success", payload: user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: "error", error: "Error al obtener el usuario por ID" });
   }
 }
   
@@ -54,7 +81,7 @@ async function registerUserAndMessage(req, res) {
       await newMessage.save();
     }
 
-    res.redirect("/login");
+    res.redirect("/login");// no funciona
   } catch (error) {
     console.error(error);
     res.status(500).json({ status: "error", error: "Error al guardar usuario y mensaje" });
@@ -76,8 +103,10 @@ async function loginUser(req, res) {
 
     const userCart = await cartModel.findById(user.cartId);
 
-    console.log(token)
-    console.log(user)
+    /* console.log("token desde usercontrolers",token) */
+    /* console.log(user) */
+    /* const userDTO = new UserDTO(user);
+    console.log(userDTO);  */
 
     res.status(200).json({ token, userCart });
   } catch (error) {
@@ -132,6 +161,7 @@ async function deleteUser(req, res) {
 
 module.exports = {
   registerUserAndMessage,
+  getUserById,
   loginUser,
   getUserInfo,
   logoutUser,
@@ -139,4 +169,5 @@ module.exports = {
   deleteUser,
   getAllUsers,
   createUser,
+  getUserByEmail,
 };

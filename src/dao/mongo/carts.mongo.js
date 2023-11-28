@@ -1,5 +1,6 @@
-const {cartModel} = require("../models/carts.model.js");
-const {productModel} = require("../models/products.model.js");
+const {cartModel} = require("./models/carts.model.js");
+const {productModel} = require("./models/products.model.js");
+const {userModel} = require("./models/users.model.js")
 
 class CartDao {
     async getCartById(cartId) {
@@ -129,6 +130,33 @@ class CartDao {
         } catch (error) {
             console.error(error);
             return { error: 'Error al eliminar el producto del carrito' };
+        }
+    }
+
+    async getUserCart(userId) {
+        try {
+            const user = await userModel.findById(userId);
+            if (!user || !user.cartId) {
+                return null;
+            }
+    
+            const cartId = user.cartId;
+            const cart = await CartDao.getCartById(cartId);
+            return cart;
+        } catch (error) {
+            throw new Error('Error al obtener el carrito del usuario');
+        }
+    }
+
+    async createTicket(ticketData) {
+        try {
+            // Código para crear un ticket en la base de datos utilizando el ticketModel
+            const ticket = new this.ticketModel(ticketData);
+            const savedTicket = await ticket.save();
+            return savedTicket;
+        } catch (error) {
+            console.error('Error al crear el ticket:', error);
+            return null;
         }
     }
 }

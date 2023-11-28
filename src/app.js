@@ -18,44 +18,17 @@ const MongoStore = require("connect-mongo");
 const session = require("express-session");
 const passport = require("passport");
 const fileStore = require("session-file-store");
-const initializePassport = require("./config/passport.config.js");
+const { initializePassport, checkRole } = require("./config/passport.config");
 const GitHubStrategy = require("passport-github2");
 const cookieParser = require("cookie-parser"); //revisar si funciona
+const { Contacts, Users, Carts, Products } = require("./dao/factory");
 
-initializePassport();
 
 const app = express()
 const server = http.createServer(app)
 const io = new Server(server)
 global.io = io;
 const PORT = 8080
-
-async function crearArchivoJson() {
-    try {
-        const products = fs.existsSync("products.json")  // consultar porque la sintaxis no lleva .promises ej: fs.promises.existync...
-        if(!products){
-            fs.writeFileSync("products.json", JSON.stringify([]))
-            console.log("archivo products.json creado exitosamente")
-        } else {
-            console.log("El archivo products.json ya existe")
-        }
-        const carts = fs.existsSync("carts.json")
-        if(!carts){
-            fs.writeFileSync("carts.json", JSON.stringify([]))
-            console.log("archivo carts.json creado exitosamente")
-        } else {
-            console.log("El archivo carts.json ya existe")
-        }
-        
-    } catch (error) {
-        console.log(" Error al crear el archivo", error)
-    }
-}
-
-crearArchivoJson()
-
-
-
 
 
 //MIDDLEWARES
@@ -72,14 +45,6 @@ io.on('connection', (socket) => {
     });
 });
 
-
-mongoose.connect("mongodb+srv://rodrigo:Rodrigocoderhouse@cluster0.unz3ypw.mongodb.net/ecommerce?retryWrites=true&w=majority")
-    .then(()=>{
-        console.log("conectado a la base de datos")
-    })
-    .catch(error =>{
-        console.log("error al conectarse a la base de datos", error)
-    })
 
 server.listen(PORT, ()=>{
     console.log(`servidor corriendo en puerto ${PORT}`)
@@ -100,9 +65,11 @@ app.use(session({
     saveUninitialized: true
 }));
 
+//uso PASSPORT
+initializePassport();
 
 //RUTAS
-app.use(passport.initialize());
+app.use(passport.initialize())
 app.use(passport.session());
 app.use("/", cartRouter);
 app.use("/", productsRouter); 

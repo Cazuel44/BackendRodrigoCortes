@@ -8,7 +8,7 @@ socket.on('conexion-establecida', (mensaje) => {
 
 socket.on('newProduct', (data) => {
   console.log(data)
-  const productsElements = document.getElementById('products');
+  const productsElements = document.getElementById("products");
   console.log(productsElements)
   const productElement = document.createElement('li');
   productElement.innerHTML = `${data.title} - ${data.description}`;
@@ -33,13 +33,57 @@ document.addEventListener("DOMContentLoaded", () => {
   const detalleButtons = document.querySelectorAll(".detalle-button");
   // agregar un evenlistener
   detalleButtons.forEach((button) => {
-    console.log("Evento de clic registrado en botón de detalle");
+    
     button.addEventListener("click", function (event) {
       const productId = event.currentTarget.dataset.productId;
       window.location.href = `/product/${productId}`;
     });
 
   }); 
+
+
+  const carritoBtn = document.getElementById("carrito-compra");
+  console.log(carritoBtn);
+  async function obtenerIdCarrito() {
+    console.log('Ejecutando obtenerIdCarrito')
+    try {
+      console.log("pasando1")
+      const response = await fetch("/api/carts/getusercart", {
+        method: 'GET', // Agrega el método GET
+        headers: {
+          'Content-Type': 'application/json',
+          
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.cart; // Asegúrate de usar la propiedad correcta que contiene el ID del carrito
+      } else {
+        const errorData = await response.json();
+        console.error('No se pudo obtener el ID del carrito:', errorData);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error al obtener el ID del carrito:', error);
+      return null;
+    }
+  }
+
+  if (carritoBtn) {
+    carritoBtn.addEventListener("click", async () => {
+      try {
+        const carritoId = await obtenerIdCarrito();
+        if (carritoId) {
+          window.location.href = `/cart/detail/${carritoId}`;
+        } else {
+          console.error("No se pudo obtener el ID del carrito.");
+        }
+      } catch (error) {
+        console.error("Error al obtener el ID del carrito:", error);
+      }
+    });
+  }
 
   
   const formulario = document.getElementById("messageForm");
@@ -89,66 +133,68 @@ document.addEventListener("DOMContentLoaded", () => {
   
   //EVENTO LOGIN antiguo
   const loginForm = document.getElementById("loginForm");
-
-  loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-
-    // Verificar que se ingresen email y contraseña
-    if (email.trim() === "" || password.trim() === "") {
-      alert("Por favor, ingresa tu email y contraseña.");
-      return;
-    }
-
-    // en la ruta tenia /api/session/login
-    try {
-
-      const response = await fetch("/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, password })
-      });
-      console.log("response", response)
-      if (response.ok) {
-        const data = await response.json();
-        const token = data.token;
-        console.log(token)
-        // Almacena el token en localStorage para sesiones posteriores (opcional)
-        /* localStorage.setItem("token", token); */
-
-        // Determina la redirección según el rol del usuario
-        const userResponse = await fetch("/api/sessions/user", {
-          method: "GET",
+  if(loginForm){
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+  
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+  
+      // Verificar que se ingresen email y contraseña
+      if (email.trim() === "" || password.trim() === "") {
+        alert("Por favor, ingresa tu email y contraseña.");
+        return;
+      }
+  
+      // en la ruta tenia /api/session/login
+      try {
+  
+        const response = await fetch("/login", {
+          method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          }
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ email, password })
         });
-
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          const { rol } = userData;
-
-          if (rol === "admin") {
-            window.location.href = "/profile"; // Redirige a la página de perfil de administrador
+        console.log("response", response)
+        if (response.ok) {
+          const data = await response.json();
+          const token = data.token;
+          console.log(token)
+          // Almacena el token en localStorage para sesiones posteriores (opcional)
+          /* localStorage.setItem("token", token); */
+  
+          // Determina la redirección según el rol del usuario
+          const userResponse = await fetch("/api/sessions/user", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            }
+          });
+  
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            const { rol } = userData;
+  
+            if (rol === "admin") {
+              window.location.href = "/profile"; // Redirige a la página de perfil de administrador
+            } else {
+              window.location.href = "/allproducts"; // Redirige a la página de productos para usuarios
+            }
           } else {
-            window.location.href = "/allproducts"; // Redirige a la página de productos para usuarios
+            alert("Error al obtener información del usuario. Por favor, inténtalo de nuevo más tarde.");
           }
         } else {
-          alert("Error al obtener información del usuario. Por favor, inténtalo de nuevo más tarde.");
+          alert("Correo o contraseña incorrectos. Por favor, inténtalo de nuevo.");
         }
-      } else {
-        alert("Correo o contraseña incorrectos. Por favor, inténtalo de nuevo.");
+      } catch (error) {
+        console.error(error);
+        alert("Error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.");
       }
-    } catch (error) {
-      console.error(error);
-      alert("Error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.");
-    }
-  });
+    });
+  }
+  
   
   
 

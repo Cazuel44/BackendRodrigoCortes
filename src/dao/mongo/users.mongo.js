@@ -1,4 +1,4 @@
-const {userModel} = require("../models/users.model.js");
+const {userModel} = require("./models/users.model.js");
 
 class UserDAO {
   // Funciones DAO para el manejo de los usuarios en la base de datos

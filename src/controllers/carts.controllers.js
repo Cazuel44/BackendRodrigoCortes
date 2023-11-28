@@ -1,4 +1,9 @@
-const CartDao = require("../dao/clases/carts.dao.js");
+const CartDao = require("../dao/mongo/carts.mongo");
+const mongoose = require("mongoose")
+const cookieParser = require('cookie-parser');
+const {PRIVATE_KEY} = require("../utils.js");
+const {userDao} = require("./users.controllers.js")
+const jwt = require("jsonwebtoken")
 
 //se instancia la clase del carrito 
 const cartDao = new CartDao();
@@ -7,6 +12,27 @@ const cartDao = new CartDao();
 async function getCartById(req, res) {
     try {
         const cartId = req.params.cid;
+        if (!mongoose.Types.ObjectId.isValid(cartId)) {
+            return res.status(400).json({ message: 'ID de carrito no válido' });
+        }
+
+        const cart = await cartDao.getCartById(cartId);
+        
+        if (!cart) {
+            return res.status(404).json({ message: "Carrito no encontrado" });
+        }
+        
+        return res.render("cartDetail", { cart });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ status: "error", error: "tenemos un 33-12" });
+    }
+}
+
+/* async function getCartById(req, res) {
+    try {
+        const cartId = req.params.cid;
+        console.log(cartId)
         const cart = await cartDao.getCartById(cartId);
         if (!cart) {
             return res.status(404).json({ message: "Carrito no encontrado" });
@@ -16,7 +42,58 @@ async function getCartById(req, res) {
         console.error(error);
         return res.status(500).json({ status: "error", error: "tenemos un 33-12" });
     }
+} */
+
+//ruta para sacar el id del carrito del usuario para usar con el boton micarrito
+async function getUserCart(req, res) {
+    console.log("paso1funcion")
+    try {
+        console.log("FUNCA")
+        // Obtener el token del encabezado de la solicitud
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ message: 'Token de autorización no válido' });
+        }
+
+        const token = authHeader.split(' ')[1]; // Obtener solo el token, eliminando 'Bearer '
+
+        // Verificar y decodificar el token para obtener la información del usuario
+        const decodedToken = jwt.verify(token, PRIVATE_KEY); 
+
+        // Obtener el correo electrónico del usuario desde el token decodificado
+        const userEmail = decodedToken.email;
+        console.log(userEmail);
+
+        // Resto del código para obtener el carrito...
+        // Buscar al usuario en la base de datos usando el correo electrónico
+        const user = await userDao.getUserByEmail(userEmail);
+
+        if (!user) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        // Obtener el ID del carrito del usuario encontrado
+        const cartId = user.carrito;
+        console.log("Valor de user.carrito:", user.carrito);
+        if (!mongoose.Types.ObjectId.isValid(cartId)) {
+            return res.status(400).json({ message: 'ID de carrito no válido' });
+        }
+
+        // Buscar el carrito utilizando el ID obtenido
+        const cart = await cartDao.getCartById(cartId);
+        
+        if (!cart) {
+            return res.status(404).json({ message: 'Carrito no encontrado' });
+        }
+
+        return res.status(200).json({ cart });
+    } catch (error) {
+        console.error('Error al obtener el carrito del usuario:', error);
+        return res.status(500).json({ message: 'Error al obtener el carrito del usuario.' });
+    }
 }
+
+
 
 // funcion para obtener todos los carritos
 async function getAllCarts(req, res) {
@@ -113,7 +190,47 @@ async function deleteProductFromCart(req, res) {
         return res.json(result);
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ error: 'Algo salió mal al eliminar el producto del carrito' });
+        return res.status(500).json({ error: "Algo salió mal al eliminar el producto del carrito" });
+    }
+}
+
+//completar compra del carrito
+async function purchaseProducts(req, res) {
+    const cartId = req.params.cid;
+
+    try {
+        // Lógica para obtener los productos del carrito...
+        const cartProducts = await getCartProducts(cartId); // Función para obtener los productos del carrito
+
+        // Verificar el stock de cada producto en el carrito en la base de datos
+        const insufficientStock = await checkInsufficientStock(cartProducts);
+
+        if (insufficientStock) {
+            return res.status(400).json({ message: 'Uno o más productos están fuera de stock.' });
+        }
+
+        // Calcular el total de todos los productos
+        const totalAmount = calculateTotal(cartProducts);
+
+        // Crear un ticket único con el total y otras características
+        const ticketData = {
+            code: generateUniqueCode(),
+            purchaser: userId,
+            total: totalAmount,
+            products: cartProducts, // Aquí irían los productos del carrito
+            // Otras propiedades como la fecha y demás
+        };
+
+        // Reducir el stock de cada producto comprado en la base de datos
+        await reduceProductStock(cartProducts);
+
+        // Guardar el ticket en la base de datos usando el DAO
+        const createdTicket = await cartDao.createTicket(ticketData);
+
+        return res.status(200).json({ ticket: createdTicket });
+    } catch (error) {
+        console.error('Error al comprar productos del carrito:', error);
+        return res.status(500).json({ message: 'Error al comprar productos del carrito.' });
     }
 }
 
@@ -126,4 +243,6 @@ module.exports = {
     deleteCartById,
     deleteAllProductsInCart,
     deleteProductFromCart,
+    purchaseProducts,
+    getUserCart,
 };

@@ -1,4 +1,4 @@
-const ProductDao = require("../dao/clases/products.dao.js"); // Importa tu DAO o servicio adecuado
+const ProductDao = require("../dao/mongo/products.mongo"); // Importa tu DAO o servicio adecuado
 
 
 // se instancia la clase de productos
