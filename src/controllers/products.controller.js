@@ -69,7 +69,7 @@ const saveProduct = async (req, res) => {
     const newProduct = req.body;
     try {
         const result = await productDao.saveProduct(newProduct);
-        res.json({ status: "success", result: result });
+        res.json({ status: "success producto creado", result: result });
     } catch (error) {
         console.log(error);
         res.status(500).send({ status: "error", error: "Algo salio mal intenta mas tarde" });
@@ -84,7 +84,7 @@ const updateProduct = async (req, res) => {
     // intenta acceder a un producto especifico de la base de datos y mediante postman se modifica lo que se requiere y lo que no se mantiene tal cual esta 
     try {
         const result = await productDao.updateProduct(productId, updatedProduct);
-        res.json({ status: "success", result: result });
+        res.json({ status: "success producto actualizado", result: result });
     } catch (error) {
         console.log(error);
         res.status(500).send({ status: "error", error: "Algo salio mal intenta mas tarde" });
@@ -96,7 +96,7 @@ const deleteProduct = async (req, res) => {
     const productId = req.params.id;
     try {
         const result = await productDao.deleteProduct(productId);
-        res.json({ status: "success", result: result });
+        res.json({ status: "success producto eliminado", result: result });
     } catch (error) {
         console.log(error);
         res.status(500).send({ status: "error", error: "Algo salio mal intenta mas tarde" });

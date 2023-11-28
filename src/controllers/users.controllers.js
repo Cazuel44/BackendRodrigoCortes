@@ -103,8 +103,8 @@ async function loginUser(req, res) {
 
     const userCart = await cartModel.findById(user.cartId);
 
-    /* console.log("token desde usercontrolers",token) */
-    /* console.log(user) */
+    console.log("token desde usercontrolers",token)
+    console.log(user)
     /* const userDTO = new UserDTO(user);
     console.log(userDTO);  */
 

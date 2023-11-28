@@ -1,5 +1,7 @@
 const CartDao = require("../dao/mongo/carts.mongo");
 const mongoose = require("mongoose")
+const { ticketModel } = require("../dao/mongo/models/tickets.model.js");
+const { v4: uuidv4 } = require('uuid');
 const cookieParser = require('cookie-parser');
 const {PRIVATE_KEY} = require("../utils.js");
 const {userDao} = require("./users.controllers.js")
@@ -12,26 +14,6 @@ const cartDao = new CartDao();
 async function getCartById(req, res) {
     try {
         const cartId = req.params.cid;
-        if (!mongoose.Types.ObjectId.isValid(cartId)) {
-            return res.status(400).json({ message: 'ID de carrito no válido' });
-        }
-
-        const cart = await cartDao.getCartById(cartId);
-        
-        if (!cart) {
-            return res.status(404).json({ message: "Carrito no encontrado" });
-        }
-        
-        return res.render("cartDetail", { cart });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ status: "error", error: "tenemos un 33-12" });
-    }
-}
-
-/* async function getCartById(req, res) {
-    try {
-        const cartId = req.params.cid;
         console.log(cartId)
         const cart = await cartDao.getCartById(cartId);
         if (!cart) {
@@ -42,9 +24,11 @@ async function getCartById(req, res) {
         console.error(error);
         return res.status(500).json({ status: "error", error: "tenemos un 33-12" });
     }
-} */
+}
 
-//ruta para sacar el id del carrito del usuario para usar con el boton micarrito
+
+
+//INCOMPLETOOOOruta para sacar el id del carrito del usuario para usar con el boton micarrito INCOMPLETOOOO
 async function getUserCart(req, res) {
     console.log("paso1funcion")
     try {
@@ -130,7 +114,35 @@ async function createCart(req, res) {
 }
 
 // funcion para añadir un producto especifico a un carrito especifico 
-async function addProductToCart(req, res) {
+
+async function addProductsToCart(req, res) {
+    try {
+        const cartId = req.params.cid;
+        const products = req.body; // Espera un array de productos
+
+        // Verifica si products es un array y no está vacío
+        if (!Array.isArray(products) || products.length === 0) {
+            return res.status(400).json({ message: "Formato de productos no válido" });
+        }
+
+        // Verifica cada producto del array
+        for (const product of products) {
+            const { productId, quantity } = product;
+            if (quantity < 1) {
+                return res.status(400).json({ message: "La cantidad debe ser 1 o más" });
+            }
+        }
+
+        // Llama a la función de DAO para agregar productos al carrito
+        const result = await cartDao.addProductsToCart(cartId, products);
+        return res.json(result);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ status: "error", error: error.message });
+    }
+}
+
+/* async function addProductToCart(req, res) {
     try {
         // en la logica se obtiene el id del carrito + id del producto especifico y se agrega el producto al carrito si todo funciona bien 
         const cartId = req.params.cid;
@@ -141,7 +153,7 @@ async function addProductToCart(req, res) {
         console.error(error);
         return res.status(500).json({ status: "error", error: "tenemos un 33-12" });
     }
-}
+} */
 
 // contador (cantidad) de un producto en un carrito
 async function updateProductQuantity(req, res) {
@@ -194,51 +206,68 @@ async function deleteProductFromCart(req, res) {
     }
 }
 
+// funcion para generar un codigo aleatorio
+function generateUniqueCode() {
+    return uuidv4();
+}
+
 //completar compra del carrito
 async function purchaseProducts(req, res) {
     const cartId = req.params.cid;
+    const userEmail = req.user.email;
 
     try {
         // Lógica para obtener los productos del carrito...
-        const cartProducts = await getCartProducts(cartId); // Función para obtener los productos del carrito
-
+        const cartProducts = await cartDao.getCartProducts(cartId); // Función para obtener los productos del carrito
+        
         // Verificar el stock de cada producto en el carrito en la base de datos
-        const insufficientStock = await checkInsufficientStock(cartProducts);
+        const stock = await cartDao.checkStock(cartProducts);
 
-        if (insufficientStock) {
-            return res.status(400).json({ message: 'Uno o más productos están fuera de stock.' });
+        if (stock && stock.success === false) {
+            return res.status(400).json({ message: stock.message });
         }
 
         // Calcular el total de todos los productos
-        const totalAmount = calculateTotal(cartProducts);
-
+        const total = calculateTotal(cartProducts);
+        const currentDate = new Date();
         // Crear un ticket único con el total y otras características
         const ticketData = {
             code: generateUniqueCode(),
-            purchaser: userId,
-            total: totalAmount,
+            purchaser: userEmail,
+            amount: total,
             products: cartProducts, // Aquí irían los productos del carrito
-            // Otras propiedades como la fecha y demás
+            purchase_datetime: currentDate, 
+            
         };
-
-        // Reducir el stock de cada producto comprado en la base de datos
-        await reduceProductStock(cartProducts);
 
         // Guardar el ticket en la base de datos usando el DAO
         const createdTicket = await cartDao.createTicket(ticketData);
 
+        if(createdTicket){
+            await cartDao.deleteAllProductsInCart(cartId);
+        }
+
         return res.status(200).json({ ticket: createdTicket });
     } catch (error) {
-        console.error('Error al comprar productos del carrito:', error);
+        console.error("Error al comprar productos del carrito:", error);
         return res.status(500).json({ message: 'Error al comprar productos del carrito.' });
     }
+}
+
+function calculateTotal(cartProducts) {
+    let total = 0;
+    for (const product of cartProducts) {
+        // Suponiendo que cada producto tiene un campo de 'price'
+        total += product.price * product.quantity;
+    }
+    return total;
 }
 
 module.exports = {
     getCartById,
     getAllCarts,
     createCart,
-    addProductToCart,
+    addProductsToCart,
     updateProductQuantity,
     deleteCartById,
     deleteAllProductsInCart,
