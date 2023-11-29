@@ -9,7 +9,7 @@ router.get("/users/:uid", usersControllers.getUserById);
 router.post("/api/users", usersControllers.createUser);
 router.post("/register", usersControllers.registerUserAndMessage);
 router.post("/login", usersControllers.loginUser);
-router.get("/api/sessions/user", /* authToken */passport.authenticate("current", { session: false }), usersControllers.getUserInfo);
+router.get("/api/sessions/user", passport.authenticate("current", { session: false }), usersControllers.getUserInfo);
 router.get("/logout", usersControllers.logoutUser);
 router.put("/users/:uid", usersControllers.updateUser);
 router.delete("/users/:uid", usersControllers.deleteUser);

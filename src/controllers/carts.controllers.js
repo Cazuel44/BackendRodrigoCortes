@@ -30,22 +30,11 @@ async function getCartById(req, res) {
 
 //INCOMPLETOOOOruta para sacar el id del carrito del usuario para usar con el boton micarrito INCOMPLETOOOO
 async function getUserCart(req, res) {
-    console.log("paso1funcion")
+    console.log("paso1funcion");
     try {
-        console.log("FUNCA")
-        // Obtener el token del encabezado de la solicitud
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ message: 'Token de autorización no válido' });
-        }
-
-        const token = authHeader.split(' ')[1]; // Obtener solo el token, eliminando 'Bearer '
-
-        // Verificar y decodificar el token para obtener la información del usuario
-        const decodedToken = jwt.verify(token, PRIVATE_KEY); 
-
-        // Obtener el correo electrónico del usuario desde el token decodificado
-        const userEmail = decodedToken.email;
+        console.log("FUNCA");
+        // Obtener el correo electrónico del usuario desde req.user
+        const userEmail = req.user.email;
         console.log(userEmail);
 
         // Resto del código para obtener el carrito...
@@ -76,7 +65,6 @@ async function getUserCart(req, res) {
         return res.status(500).json({ message: 'Error al obtener el carrito del usuario.' });
     }
 }
-
 
 
 // funcion para obtener todos los carritos

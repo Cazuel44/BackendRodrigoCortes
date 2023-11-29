@@ -13,6 +13,6 @@ router.delete("/api/deletecarts/:id", cartsControllers.deleteCartById); // borra
 router.delete("/api/deleteproductcarts/:cid", cartsControllers.deleteAllProductsInCart); // borrar todos los productos del un carrito
 router.delete("/api/carts/:cid/product/:pid", cartsControllers.deleteProductFromCart); // borrar un producto especifico de un carrito especifico
 router.get("/api/carts/:cid/purchase", passport.authenticate('current', { session: false }), checkRole('user'), cartsControllers.purchaseProducts); // realizar la compra total de los productos del carrito
-router.get("/api/carts/getusercart", cartsControllers.getUserCart); //obtener el carrito del usuario
+router.get("/api/carts/getusercart", passport.authenticate('current', { session: false }), cartsControllers.getUserCart); //obtener el carrito del usuario
 
 module.exports = router;
