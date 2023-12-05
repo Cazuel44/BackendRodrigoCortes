@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 
+
 /* -El hashSync toma el password que le pasemos y procedera a aplicar un proseso de 
 "hasheo de contraseña" desde un "Salt". 
 -genSaltSync crea un salt de 10 caracteres(un Salt es un string random que hace que el proceso de
@@ -47,6 +48,7 @@ const authToken = (req, res, next) => {
     next();
   });
 };
+
 
 
 module.exports = {

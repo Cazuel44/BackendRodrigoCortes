@@ -42,25 +42,23 @@ document.addEventListener("DOMContentLoaded", () => {
   }); 
 
 
-  const carritoBtn = document.getElementById("carrito-compra");
-  console.log(carritoBtn);
-  async function obtenerIdCarrito() {
-    console.log('Ejecutando obtenerIdCarrito')
-    try {
-      console.log("pasando1")
-      const response = await fetch("/api/carts/getusercart", {
-        method: 'GET', // Agrega el método GET
-        headers: {
-          'Content-Type': 'application/json',
-          
-        },
-      });
 
-      if (response.ok) {
-        const data = await response.json();
-        return data.cart; // Asegúrate de usar la propiedad correcta que contiene el ID del carrito
+  const carritoBtn = document.getElementById("carrito-compra");
+
+  async function obtenerIdCarrito() {
+    try {
+      const userResponse = await fetch("/api/carts/getusercart", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+    
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        return userData.cartId;
       } else {
-        const errorData = await response.json();
+        const errorData = await userResponse.json();
         console.error('No se pudo obtener el ID del carrito:', errorData);
         return null;
       }
@@ -69,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return null;
     }
   }
-
+  
   if (carritoBtn) {
     carritoBtn.addEventListener("click", async () => {
       try {
@@ -84,6 +82,71 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+
+
+  /* // Obtener el botón del carrito
+  const carritoBtn = document.getElementById("carrito-compra");
+
+  //funcion para obtener token de cookies desde el cliente 
+  function obtenerTokenDeCookies() {
+    console.log("ejecutando funcion para obtener token")
+    const cookies = document.cookie.split(";").map(cookie => cookie.trim());
+    const tokenCookie = cookies.find(cookie => {
+      const [cookieName] = cookie.split("=");
+      return cookieName === "token";
+    });
+  
+    if (tokenCookie) {
+      return tokenCookie.split("=")[1];
+    } else {
+      return null;
+    }
+  }
+
+  // Función para obtener el ID del carrito
+  async function obtenerIdCarrito() {
+    try {
+      const token = obtenerTokenDeCookies(); // Obtener el token de las cookies
+      console.log(token)
+      const userResponse = await fetch("/api/sessions/user", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` // Pasar el token en la solicitud
+        }
+      });
+  
+      if (userResponse.ok) {
+        console.log(userResponse)
+        const userData = await userResponse.json();
+        return userData.cart; // Asegúrate de usar la propiedad correcta que contiene el ID del carrito
+      } else {
+        const errorData = await userResponse.json();
+        console.error('No se pudo obtener el ID del carrito:', errorData);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error al obtener el ID del carrito:', error);
+      return null;
+    }
+  }
+  
+  // Manejar clic en el botón del carrito
+  if (carritoBtn) {
+    carritoBtn.addEventListener("click", async () => {
+      try {
+        const carritoId = await obtenerIdCarrito();
+        if (carritoId) {
+          window.location.href = `/cart/detail/${carritoId}`;
+        } else {
+          console.error("No se pudo obtener el ID del carrito.");
+        }
+      } catch (error) {
+        console.error("Error al obtener el ID del carrito:", error);
+      }
+    });
+  } */
 
   
   const formulario = document.getElementById("messageForm");

@@ -1,4 +1,5 @@
 const ProductDao = require("../dao/mongo/products.mongo"); // Importa tu DAO o servicio adecuado
+const { ProductCreationError } = require("../Errors/customErrors.js");
 
 
 // se instancia la clase de productos
@@ -64,8 +65,64 @@ const getProductById = async (req, res) => {
     }
 };
 
-// funcion para crear un nuevo producto 
+// funcion para crear un nuevo producto y funcion para verificar si el producto es valido antes de crearlo
+function isValidProduct(product) {
+    // primero valida que product sea un objeto 
+    if (!product || typeof product !== "object") {
+        return false;
+    }
+
+    // se desestructura el objeto product para obtener cada propiedad
+    const {
+        title,
+        description,
+        code,
+        price,
+        stock,
+        category,
+        thumbnails
+    } = product;
+
+    // validacion se tipo string o number en cada propiedad
+    if (
+        typeof title === "string" &&
+        typeof description === "string" &&
+        typeof code === "string" &&
+        typeof price === "number" &&
+        typeof stock === "number" &&
+        typeof category === "string" &&
+        typeof thumbnails === "string"
+    ) {
+        return true;
+    } else {
+        return false;
+    }
+    // si se cumplen las validaciones retorna true (producto valido y continua con la funcion saveproduct)
+    
+}
+
 const saveProduct = async (req, res) => {
+    const newProduct = req.body;
+    try {
+        if (!isValidProduct(newProduct)) {
+            throw new ProductCreationError("datos del producto invalidos"); 
+        }
+        
+        const result = await productDao.saveProduct(newProduct);
+        res.json({ status: "success producto creado", result: result });
+    } catch (error) {
+        if (error instanceof ProductCreationError) {
+            console.error("Error al crear el producto:", error.message);
+            res.status(error.statusCode).send({ status: "error", error: error.message });
+        } else {
+            console.error(error);
+            res.status(500).send({ status: "error", error: "Algo salio mal intenta mas tarde" });
+        }
+    }
+};
+
+//SAVEPRODUCT ANTIGUO EN CASO DE ERROR
+/* const saveProduct = async (req, res) => {
     const newProduct = req.body;
     try {
         const result = await productDao.saveProduct(newProduct);
@@ -74,7 +131,7 @@ const saveProduct = async (req, res) => {
         console.log(error);
         res.status(500).send({ status: "error", error: "Algo salio mal intenta mas tarde" });
     }
-};
+}; */
 
 // actualizar un producto especifico segun id
 const updateProduct = async (req, res) => {

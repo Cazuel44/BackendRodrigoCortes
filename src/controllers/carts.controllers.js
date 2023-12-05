@@ -1,17 +1,24 @@
 const CartDao = require("../dao/mongo/carts.mongo");
 const mongoose = require("mongoose")
 const { ticketModel } = require("../dao/mongo/models/tickets.model.js");
+const { AddProductToCart } = require("../Errors/customErrors.js");
 const { v4: uuidv4 } = require('uuid');
 const cookieParser = require('cookie-parser');
 const {PRIVATE_KEY} = require("../utils.js");
-const {userDao} = require("./users.controllers.js")
 const jwt = require("jsonwebtoken")
+const { getUserByEmail } = require("./users.controllers.js");
+const {userDao} = require("./users.controllers.js")// verificar si es necesario
+
+
+
 
 //se instancia la clase del carrito 
 const cartDao = new CartDao();
 
 // funcion para obtener un carrito especifico segun id 
-async function getCartById(req, res) {
+
+
+/* async function getCartById(req, res) {
     try {
         const cartId = req.params.cid;
         console.log(cartId)
@@ -24,42 +31,36 @@ async function getCartById(req, res) {
         console.error(error);
         return res.status(500).json({ status: "error", error: "tenemos un 33-12" });
     }
-}
+} */
 
 
 
 //INCOMPLETOOOOruta para sacar el id del carrito del usuario para usar con el boton micarrito INCOMPLETOOOO
 async function getUserCart(req, res) {
-    console.log("paso1funcion");
     try {
-        console.log("FUNCA");
-        // Obtener el correo electrónico del usuario desde req.user
         const userEmail = req.user.email;
-        console.log(userEmail);
 
-        // Resto del código para obtener el carrito...
         // Buscar al usuario en la base de datos usando el correo electrónico
-        const user = await userDao.getUserByEmail(userEmail);
+        const user = await getUserByEmail(userEmail);
 
         if (!user) {
-            return res.status(404).json({ message: 'Usuario no encontrado' });
+          return res.status(404).json({ message: 'Usuario no encontrado' });
         }
 
-        // Obtener el ID del carrito del usuario encontrado
-        const cartId = user.carrito;
-        console.log("Valor de user.carrito:", user.carrito);
-        if (!mongoose.Types.ObjectId.isValid(cartId)) {
-            return res.status(400).json({ message: 'ID de carrito no válido' });
+        // Verificar si el cartId es un ObjectId válido
+        const isValidObjectId = mongoose.Types.ObjectId.isValid(user.cartId);
+        if (!isValidObjectId) {
+          return res.status(400).json({ message: 'ID de carrito no válido' });
         }
 
-        // Buscar el carrito utilizando el ID obtenido
-        const cart = await cartDao.getCartById(cartId);
-        
+        // Continuar con la búsqueda del carrito utilizando el ID obtenido
+        const cart = await cartDao.getCartById(user.cartId);
+
         if (!cart) {
-            return res.status(404).json({ message: 'Carrito no encontrado' });
+          return res.status(404).json({ message: 'Carrito no encontrado' });
         }
 
-        return res.status(200).json({ cart });
+        return res.status(200).json({ cartId: user.cartId }); // Devolver el ID del carrito
     } catch (error) {
         console.error('Error al obtener el carrito del usuario:', error);
         return res.status(500).json({ message: 'Error al obtener el carrito del usuario.' });
@@ -101,12 +102,74 @@ async function createCart(req, res) {
     }
 }
 
-// funcion para añadir un producto especifico a un carrito especifico 
+// funcion para añadir productos a un carrito especifico
+async function isvalidcart(cart){
+    
+    // primero valida que cart exista en la bd
+    const cartBd = await cartDao.getCartById(cart)
+    if(!cartBd){
+        return false
+    }
+    return true
+   
+}
+
+async function isValidCartId(id){
+    if(typeof id !== "string"){
+        return false;
+    }
+    return true;
+}
 
 async function addProductsToCart(req, res) {
     try {
         const cartId = req.params.cid;
         const products = req.body; // Espera un array de productos
+
+        // Verifica si products es un array y no está vacío
+        if (!Array.isArray(products) || products.length === 0) {
+            return res.status(400).json({ message: "Formato de productos no válido" });
+        }
+
+        // Valida el ID del carrito
+        if (!(await isValidCartId(cartId))) {
+            throw new AddProductToCart("ID de carrito no válido", 400);
+        }
+
+        // Valida si el carrito existe
+        if (!(await isvalidcart(cartId))) {
+            throw new AddProductToCart("El carrito no existe", 404);
+        }
+
+        // Verifica cada producto del array
+        for (const product of products) {
+            const { productId, quantity } = product;
+            if (quantity < 1) {
+                throw new AddProductToCart("La cantidad debe ser 1 o más", 400);
+            }
+        }
+
+        // Llama a la función de DAO para agregar productos al carrito
+        const result = await cartDao.addProductsToCart(cartId, products);
+        return res.json(result);
+    } catch (error) {
+        if (error instanceof AddProductToCart) {
+            console.error('Error al agregar productos al carrito:', error.message);
+            return res.status(error.statusCode).json({ status: 'error', error: error.message });
+        } else {
+            console.error(error);
+            return res.status(500).json({ status: 'error', error: 'Algo salió mal, intenta más tarde' });
+        }
+    }
+}
+
+
+//FUNCION PARA AGREGAR VARIOS PRODUCTOS AL CARRITO (respaldo)
+/* async function addProductsToCart(req, res) {
+    try {
+        const cartId = req.params.cid;
+        const products = req.body; // Espera un array de productos
+        
 
         // Verifica si products es un array y no está vacío
         if (!Array.isArray(products) || products.length === 0) {
@@ -128,8 +191,9 @@ async function addProductsToCart(req, res) {
         console.error(error);
         return res.status(500).json({ status: "error", error: error.message });
     }
-}
+} */
 
+//para agregar un solo producto al carrito
 /* async function addProductToCart(req, res) {
     try {
         // en la logica se obtiene el id del carrito + id del producto especifico y se agrega el producto al carrito si todo funciona bien 
@@ -252,7 +316,7 @@ function calculateTotal(cartProducts) {
 }
 
 module.exports = {
-    getCartById,
+    /* getCartById, */
     getAllCarts,
     createCart,
     addProductsToCart,

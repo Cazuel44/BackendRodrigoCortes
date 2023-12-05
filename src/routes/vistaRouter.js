@@ -8,9 +8,12 @@ const {productModel} = require("../dao/mongo/models/products.model");
 const {userModel} = require("../dao/mongo/models/users.model.js")
 const { authToken } = require("../utils.js"); 
 const passport = require("passport")
+const cartDao = require("../dao/mongo/carts.mongo.js")
 
 
 const router = express.Router()
+
+const cartDaoInstance = new cartDao();
 
 router.get("/", async (req, res)=>{
     try{
@@ -74,6 +77,8 @@ router.get("/allproducts", passport.authenticate("current", { session: false })/
 });
 
 
+
+
 router.get("/login", async (req, res)=>{
     try{
         res.render("login",{})
@@ -100,8 +105,24 @@ router.get("/profile", async (req, res) => {
     } catch (error) {
       console.log("Error al acceder a la vista de perfil:", error);
     }
-  });
+});
 
+
+
+router.get("/cart/detail/:cartId", async (req, res) => {
+    try {
+        const cartId = req.params.cartId;
+        console.log("Cart ID:", cartId); // Verifica si el cartId está llegando correctamente
+
+        const cartDetails = await cartDaoInstance.getCartById(cartId);
+        console.log("Cart Details:", cartDetails); // Verifica los detalles del carrito recuperados
+
+        res.render("cartDetail", { cart: cartDetails });
+    } catch (error) {
+        console.error("Error al obtener el carrito:", error);
+        res.status(500).json({ message: "Error al cargar la página" });
+    }
+});
 
 
 module.exports = router;

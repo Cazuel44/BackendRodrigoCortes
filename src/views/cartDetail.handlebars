@@ -8,20 +8,16 @@
 <body>
     <h1>Detalles del Carrito</h1>
     <div>
-        
-    {{#if cart}}
-        <h2>Productos en el carrito:</h2>
-        <ul>
-            {{#each cart.products}}
-                <li>{{this.title}} - Precio: {{this.price}}</li>
-            {{/each}}
-        </ul>
-    {{else}}
-        <p>No se encontró el carrito.</p>
-    {{/if}}
+        {{#if cart}}
+            <h2>Productos en el carrito:</h2>
+            <ul>
+                {{#each cart.products}}
+                    <li>{{this.product.title}} - Precio: {{this.product.price}} - Cantidad: {{this.quantity}}</li>
+                {{/each}}
+            </ul>
+        {{else}}
+            <p>No se encontró el carrito.</p>
+        {{/if}}
     </div>
-    
-    {{!-- AGREGAR UN BOTON O UN LINK PARA VOLVER A VER TODOS LOS PRODUCTOS PERO DESPUES PORQUE NO LO PIDE LA TAREA --}}
-
 </body>
 </html>

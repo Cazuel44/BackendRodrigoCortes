@@ -4,7 +4,46 @@ const {userModel} = require("./models/users.model.js")
 const {ticketModel} = require("./models/tickets.model.js")
 
 class CartDao {
+
+
     async getCartById(cartId) {
+        try {
+            console.log("Searching cart with ID:", cartId);
+    
+            const cart = await cartModel.findOne({ _id: cartId })
+                .populate({
+                    path: 'products.product', // Nombre del campo que contiene la referencia al producto
+                    select: 'title price' // Selecciona los campos 'title' y 'price' del producto
+                })
+                .lean();
+    
+            console.log("Found cart:", cart);
+            return cart;
+        } catch (error) {
+            console.error("Error in getCartById:", error);
+            return null;
+        }
+    }
+
+
+
+    // trae el carrito pero los producto solo los id
+    /* async getCartById(cartId) {
+        try {
+            console.log("Searching cart with ID:", cartId); // Verifica si se está buscando el carrito con el ID correcto
+    
+            const cart = await cartModel.findOne({ _id: cartId }).populate("products").lean();
+            console.log("Found cart:", cart); // Verifica si se encontró el carrito
+    
+            return cart;
+        } catch (error) {
+            console.error("Error en getCartById:", error); // Manejo de errores
+            return null;
+        }
+    } */
+
+    //traeruncarrito por id mediante postman
+    /* async getCartById(cartId) {
         try {
             const cart = await cartModel.findById(cartId).populate("products").lean();
             return cart;
@@ -13,7 +52,7 @@ class CartDao {
             return null;
         }
     }
-
+ */
     async getAllCarts() {
         try {
             const carts = await cartModel.find();
