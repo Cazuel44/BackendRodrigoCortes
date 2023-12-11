@@ -4,6 +4,7 @@ const {messageModel} = require("../dao/mongo/models/messages.model.js");
 const { createHash, isValidPassword, generateToken, authToken } = require('../utils');
 const UserDTO = require("../dao/DTOs/user.dto.js");
 const UserDao = require("../dao/mongo/users.mongo.js");
+const logger = require("../logger.js");
 
 const userDao = new UserDao();
 
@@ -88,13 +89,14 @@ async function registerUserAndMessage(req, res) {
   }
 }
 
-// agregar al login consolelog de usuario y token
+// LOGIN
 async function loginUser(req, res) {
   const { email, password } = req.body;
   try {
     const user = await userModel.findOne({ email });
 
     if (!user || !isValidPassword(user, password)) {
+      logger.error("Usuario o contraseña incorrecta");
       return res.status(401).json({ message: "Usuario o contraseña incorrecta" });
     }
 
@@ -103,10 +105,12 @@ async function loginUser(req, res) {
 
     const userCart = await cartModel.findById(user.cartId);
 
-    console.log("token desde usercontrolers",token)
-    console.log(user)
-    /* const userDTO = new UserDTO(user);
-    console.log(userDTO);  */
+    logger.info("Inicio de sesión exitoso para el usuario: " + user.email);
+    logger.info("Token generado para el usuario: " + token);
+    // consolelog de usuario y token
+    /* console.log("token desde usercontrolers",token)
+    console.log(user) */
+   
 
     res.status(200).json({ token, userCart });
   } catch (error) {
@@ -138,11 +142,14 @@ async function updateUser(req, res) {
     const userUpdate = await userModel.findByIdAndUpdate(uid, updateFields, { new: true });
 
     if (!userUpdate) {
+      logger.error("Usuario no encontrado al intentar actualizar");
       return res.status(404).json({ status: "error", error: "Usuario no encontrado" });
     }
 
+    logger.info("Usuario actualizado correctamente:", userUpdate);
     res.json({ status: "success", message: "Usuario actualizado", user: userUpdate });
   } catch (error) {
+    logger.error("Error al actualizar el usuario:", error);
     console.error(error);
     res.status(500).json({ status: "error", error: "Error al actualizar el usuario" });
   }

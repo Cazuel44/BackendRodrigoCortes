@@ -1,5 +1,6 @@
 const ProductDao = require("../dao/mongo/products.mongo"); // Importa tu DAO o servicio adecuado
 const { ProductCreationError } = require("../Errors/customErrors.js");
+const logger = require("../logger.js");
 
 
 // se instancia la clase de productos
@@ -109,12 +110,14 @@ const saveProduct = async (req, res) => {
         }
         
         const result = await productDao.saveProduct(newProduct);
+        logger.info("Producto creado correctamente:", result);
         res.json({ status: "success producto creado", result: result });
     } catch (error) {
         if (error instanceof ProductCreationError) {
-            console.error("Error al crear el producto:", error.message);
+            logger.error("Error al crear el producto:", error.message);
             res.status(error.statusCode).send({ status: "error", error: error.message });
         } else {
+            logger.error("Error general al crear el producto:", error);
             console.error(error);
             res.status(500).send({ status: "error", error: "Algo salio mal intenta mas tarde" });
         }
@@ -141,8 +144,10 @@ const updateProduct = async (req, res) => {
     // intenta acceder a un producto especifico de la base de datos y mediante postman se modifica lo que se requiere y lo que no se mantiene tal cual esta 
     try {
         const result = await productDao.updateProduct(productId, updatedProduct);
+        logger.info("Producto actualizado correctamente:", result);
         res.json({ status: "success producto actualizado", result: result });
     } catch (error) {
+        logger.error("Error al actualizar el producto:", error);
         console.log(error);
         res.status(500).send({ status: "error", error: "Algo salio mal intenta mas tarde" });
     }
@@ -153,8 +158,10 @@ const deleteProduct = async (req, res) => {
     const productId = req.params.id;
     try {
         const result = await productDao.deleteProduct(productId);
+        logger.info("Producto eliminado correctamente:", result);
         res.json({ status: "success producto eliminado", result: result });
     } catch (error) {
+        logger.error("Error al eliminar el producto:", error);
         console.log(error);
         res.status(500).send({ status: "error", error: "Algo salio mal intenta mas tarde" });
     }

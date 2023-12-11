@@ -8,6 +8,7 @@ const {PRIVATE_KEY} = require("../utils.js");
 const jwt = require("jsonwebtoken")
 const { getUserByEmail } = require("./users.controllers.js");
 const {userDao} = require("./users.controllers.js")// verificar si es necesario
+const logger = require("../logger.js");
 
 
 
@@ -44,26 +45,31 @@ async function getUserCart(req, res) {
         const user = await getUserByEmail(userEmail);
 
         if (!user) {
-          return res.status(404).json({ message: 'Usuario no encontrado' });
+            logger.warn("Usuario no encontrado");
+            return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
         // Verificar si el cartId es un ObjectId válido
         const isValidObjectId = mongoose.Types.ObjectId.isValid(user.cartId);
         if (!isValidObjectId) {
-          return res.status(400).json({ message: 'ID de carrito no válido' });
+            logger.error("ID de carrito no válido");
+            return res.status(400).json({ message: "ID de carrito no válido" });
         }
 
         // Continuar con la búsqueda del carrito utilizando el ID obtenido
         const cart = await cartDao.getCartById(user.cartId);
 
         if (!cart) {
-          return res.status(404).json({ message: 'Carrito no encontrado' });
+            logger.warn("Carrito no encontrado");
+            return res.status(404).json({ message: "Carrito no encontrado" });
         }
 
+        logger.info("Carrito encontrado:", cart);
         return res.status(200).json({ cartId: user.cartId }); // Devolver el ID del carrito
     } catch (error) {
-        console.error('Error al obtener el carrito del usuario:', error);
-        return res.status(500).json({ message: 'Error al obtener el carrito del usuario.' });
+        logger.error("Error al obtener el carrito del usuario:", error);
+        console.error("Error al obtener el carrito del usuario:", error);
+        return res.status(500).json({ message: "Error al obtener el carrito del usuario." });
     }
 }
 
@@ -76,12 +82,15 @@ async function getAllCarts(req, res) {
         const carts = await cartDao.getAllCarts(); 
         // se aplica una condicional donde: si !NO se encuentran los carritos retorna un error y se corta la condicion con el mismo return 
         if (!carts) {
+            logger.warn("No se encontraron carritos");
             return res.status(404).json({ message: "No se encontraron carritos" });
         }
         // de lo contrario muestra todos los carritos
+        logger.info("Carritos encontrados:", carts);
         return res.json(carts);
     } catch (error) {
         //si nada funciona se muestra el error maximo
+        logger.error("Error al obtener los carritos:", error);
         console.error(error);
         return res.status(500).json({ status: "error", error: "tenemos un 33-12" });
     }
@@ -128,16 +137,19 @@ async function addProductsToCart(req, res) {
 
         // Verifica si products es un array y no está vacío
         if (!Array.isArray(products) || products.length === 0) {
+            logger.warn("Formato de productos no válido");
             return res.status(400).json({ message: "Formato de productos no válido" });
         }
 
         // Valida el ID del carrito
         if (!(await isValidCartId(cartId))) {
+            logger.error("ID de carrito no válido");
             throw new AddProductToCart("ID de carrito no válido", 400);
         }
 
         // Valida si el carrito existe
         if (!(await isvalidcart(cartId))) {
+            logger.error("El carrito no existe");
             throw new AddProductToCart("El carrito no existe", 404);
         }
 
@@ -145,6 +157,7 @@ async function addProductsToCart(req, res) {
         for (const product of products) {
             const { productId, quantity } = product;
             if (quantity < 1) {
+                logger.error("La cantidad debe ser 1 o más");
                 throw new AddProductToCart("La cantidad debe ser 1 o más", 400);
             }
         }
@@ -157,6 +170,7 @@ async function addProductsToCart(req, res) {
             console.error('Error al agregar productos al carrito:', error.message);
             return res.status(error.statusCode).json({ status: 'error', error: error.message });
         } else {
+            logger.error("Algo salió mal, intenta más tarde:", error);
             console.error(error);
             return res.status(500).json({ status: 'error', error: 'Algo salió mal, intenta más tarde' });
         }
@@ -226,8 +240,10 @@ async function deleteCartById(req, res) {
     try {
         const cartId = req.params.id;
         const result = await cartDao.deleteCartById(cartId);
+        logger.info(`Carrito con ID ${cartId} eliminado exitosamente`);
         return res.json(result);
     } catch (error) {
+        logger.error("Error al eliminar el carrito:", error);
         console.error(error);
         return res.status(500).json({ error: "Algo salió mal al eliminar el carrito" });
     }
@@ -238,8 +254,10 @@ async function deleteAllProductsInCart(req, res) {
     try {
         const cartId = req.params.cid;
         const result = await cartDao.deleteAllProductsInCart(cartId);
+        logger.info(`Todos los productos del carrito con ID ${cartId} fueron eliminados`);
         return res.json(result);
     } catch (error) {
+        logger.error("Error al eliminar los productos del carrito:", error);
         console.error(error);
         return res.status(500).json({ error: "Algo salió mal al eliminar los productos del carrito" });
     }
@@ -299,8 +317,10 @@ async function purchaseProducts(req, res) {
             await cartDao.deleteAllProductsInCart(cartId);
         }
 
+        logger.info(`Compra exitosa de productos del carrito con ID ${cartId} por el usuario ${userEmail}`);
         return res.status(200).json({ ticket: createdTicket });
     } catch (error) {
+        logger.error("Error al comprar productos del carrito:", error);
         console.error("Error al comprar productos del carrito:", error);
         return res.status(500).json({ message: 'Error al comprar productos del carrito.' });
     }

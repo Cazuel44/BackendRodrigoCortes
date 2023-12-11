@@ -24,6 +24,7 @@ const { initializePassport, checkRole } = require("./config/passport.config");
 const GitHubStrategy = require("passport-github2");
 const cookieParser = require("cookie-parser"); //revisar si funciona
 const { Contacts, Users, Carts, Products } = require("./dao/factory");
+const loggerMiddleware = require("./loggerMiddleware.js");
 
 
 const app = express()
@@ -37,19 +38,20 @@ const PORT = 8080
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(cookieParser());// revisar si funciona
+app.use(loggerMiddleware);
 
 io.on('connection', (socket) => {
-    console.log('Cliente conectado');
-  
-    socket.emit('conexion-establecida', 'Conexión exitosa con el servidor de Socket.IO');
-    socket.on('disconnect', () => {
-      console.log('Cliente desconectado');
-    });
+  console.log('Cliente conectado');
+
+  socket.emit('conexion-establecida', 'Conexión exitosa con el servidor de Socket.IO');
+  socket.on('disconnect', () => {
+    console.log('Cliente desconectado');
+  });
 });
 
 
 server.listen(PORT, ()=>{
-    console.log(`servidor corriendo en puerto ${PORT}`)
+  console.log(`servidor corriendo en puerto ${PORT}`)
 });
 
 /* //CONFIGURACION CARPETA PUBLICA
@@ -58,13 +60,13 @@ app.use(express.static(path.join(__dirname, "public"))) */
 
 // Configuración del middleware de sesión con MongoDB
 app.use(session({
-    store: MongoStore.create({
-        mongoUrl: "mongodb+srv://rodrigo:Rodrigocoderhouse@cluster0.unz3ypw.mongodb.net/ecommerce?retryWrites=true&w=majority",
-        mongoOptions: { useNewUrlParser: true, useUnifiedTopology: true }, ttl: 3500
-    }),
-    secret: "clavesecreta",
-    resave: false,
-    saveUninitialized: true
+  store: MongoStore.create({
+    mongoUrl: "mongodb+srv://rodrigo:Rodrigocoderhouse@cluster0.unz3ypw.mongodb.net/ecommerce?retryWrites=true&w=majority",
+    mongoOptions: { useNewUrlParser: true, useUnifiedTopology: true }, ttl: 3500
+  }),
+  secret: "clavesecreta",
+  resave: false,
+  saveUninitialized: true
 }));
 
 //uso PASSPORT
@@ -80,6 +82,7 @@ app.use("/", userRouter);
 app.use("/", sessionRouter);
 app.use("/", mailRouter);
 app.use("/", mockingproducts);
+
 
 
 
