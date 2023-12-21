@@ -172,8 +172,8 @@ async function updatePasswordByEmail(req, res) {
     const matchOldPassword = await bcrypt.compare(newPassword, user.password);
     console.log(matchOldPassword)
     if (matchOldPassword) {
-      /* return res.status(400).json({ error: "La nueva contraseña no puede ser igual a la anterior" }); */
-      console.log("la contraseña no puede ser igual")
+      return res.status(400).json({ error: "La nueva contraseña no puede ser igual a la anterior" });
+      /* console.log("la contraseña no puede ser igual") */
     }
 
     const hashedPassword = createHash(newPassword); /* await bcrypt.hash(newPassword, saltRounds); */
@@ -182,7 +182,7 @@ async function updatePasswordByEmail(req, res) {
     if (!userUpdate) {
       return res.status(500).json({ error: "Error al actualizar la contraseña" });
     }
-
+b
     
     return res.status(200).json({ message: "Contraseña actualizada correctamente" });
   } catch (error) {
