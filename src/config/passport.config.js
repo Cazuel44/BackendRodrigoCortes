@@ -121,8 +121,21 @@ const initializePassport = () => {
 
 };
 
-// Middleware para verificar el rol
-function checkRole(rol) {
+// Middleware para verificar roles
+function checkRole(roles) {
+  return function(req, res, next) {
+    const user = req.user; // El objeto userDTO almacenado por Passport en req.user
+
+    if (user && roles.includes(user.rol)) {
+      // El usuario tiene uno de los roles requeridos, permitir acceso a la ruta
+      next();
+    } else {
+      // Usuario no autorizado para acceder a esta ruta
+      res.status(403).json({ message: 'No tienes permisos para acceder a esta ruta.' });
+    }
+  }
+}
+/* function checkRole(rol) {
   return function(req, res, next) {
     const user = req.user; // El objeto userDTO almacenado por Passport en req.user
 
@@ -134,7 +147,7 @@ function checkRole(rol) {
       res.status(403).json({ message: 'No tienes permisos para acceder a esta ruta.' });
     }
   }  
-}
+} */
 
 
 module.exports = { initializePassport, checkRole };

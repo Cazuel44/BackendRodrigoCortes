@@ -87,6 +87,27 @@ router.get("/login", async (req, res)=>{
     }
 });
 
+router.get("/reset_password/:token", authToken, async (req, res) => {
+    try {
+        // Acceder al token desde req.params.token
+        const token = req.params.token;
+        
+        // Aquí puedes procesar el token o utilizarlo según tus necesidades
+        console.log("Token recibido:", token);
+
+        res.render("recovery", {})
+    } catch (error) {
+        console.log("error al acceder a la vista:", error);
+    }
+});
+/* router.get("/reset_password", authToken, async (req, res)=>{
+    try{
+        res.render("recovery",{})
+    } catch (error){
+        console.log("error al acceder a la vista:", error);
+    }
+}); */
+
 router.get("/profile", async (req, res) => {
     try {
       // Asegúrate de tener acceso a los datos necesarios, como el nombre y el email del usuario
