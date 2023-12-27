@@ -25,6 +25,8 @@ const GitHubStrategy = require("passport-github2");
 const cookieParser = require("cookie-parser"); //revisar si funciona
 const { Contacts, Users, Carts, Products } = require("./dao/factory");
 const loggerMiddleware = require("./loggerMiddleware.js");
+const swaggerUiExpress = require("swagger-ui-express")
+const swaggerJsdoc = require("swagger-jsdoc")
 
 
 const app = express()
@@ -32,6 +34,79 @@ const server = http.createServer(app)
 const io = new Server(server)
 global.io = io;
 const PORT = 8080
+
+
+//CONFIGURACION DE SWAGGER
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.1',
+    info: {
+      title: 'documentacion de API',
+      description: 'API clase swagger',
+    },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    security: [
+      {
+        bearerAuth: [], // Esquema de seguridad por defecto para JWT
+      },
+    ],
+  },
+  apis: [
+    './src/docs/products/*.yaml', // Ruta válida usando wildcard
+    './src/docs/carts/*.yaml', // Ruta válida usando wildcard
+    // ...otras definiciones de rutas
+  ],
+};
+/* const swaggerOptions = {
+  definition: {
+    openapi: "3.0.1",
+    info: {
+      title: "documentacion de API",
+      description: "API clase swagger",
+    },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
+    security: [{ bearerAuth: [] }],
+  },
+  apis: [
+    "src/docs/products/products.yaml",
+    "src/docs/carts/carts.yaml",
+    // ...otras definiciones de rutas
+  ],
+}; */
+
+/* const swaggerOptions = {
+  definition:{
+    openapi: "3.0.1",
+    info:{
+      title: "documentacion de API",
+      description: "Api clase swagger"
+    },
+  },
+  apis: [
+    "src/docs/products/products.yaml",
+    "src/docs/carts/carts.yaml"
+  ]
+} */
+
+const specs = swaggerJsdoc(swaggerOptions)
+app.use("/apidocs", swaggerUiExpress.serve, swaggerUiExpress.setup(specs))
+
 
 
 //MIDDLEWARES
