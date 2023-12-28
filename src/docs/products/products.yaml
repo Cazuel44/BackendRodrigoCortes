@@ -63,9 +63,6 @@ paths:
                 thumbnails:
                   type: string
                   description: URL de la imagen del producto
-                owner:
-                  type: string
-                  description: Propietario del producto
                 quantity:
                   type: number
                   description: Cantidad del producto
