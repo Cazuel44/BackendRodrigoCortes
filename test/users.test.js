@@ -11,16 +11,16 @@ const requester = supertest(app);
   
 describe("Testing Products", () => {
 
-    /* it("Debe obtener todos los usuarios de la base de datos", async () => {
+    it("Debe obtener todos los usuarios de la base de datos", async () => {
         const allUsers = await userModel.find();
         console.log(allUsers)
 
         // verificar la estructura de los datos obtenidos(Chai)
         expect(allUsers).to.be.an("array");
         
-    }); */
+    });
     
-    /* it('Debería crear un usuario en la base de datos', async () => {
+    it('Debería crear un usuario en la base de datos', async () => {
         // Datos del usuario a crear
         const userData = {
             nombre: "John",
@@ -45,9 +45,9 @@ describe("Testing Products", () => {
         expect(createdUser.cartId).to.exist; // Verifica si se asignó un cartId válido
         expect(createdUser.rol).to.equal("user");
         
-    }); */
+    });
 
-    /* it("Debe actualizar un usuario existente", async () => {
+    it("Debe actualizar un usuario existente", async () => {
         let userToUpdId = "659723f82a3e5517e8a553d2"; // ID del usuario a actualizar
 
         const updatedUserData = {
@@ -64,7 +64,7 @@ describe("Testing Products", () => {
         expect(updatedUser.nombre).to.equal("elban");
         expect(updatedUser.apellido).to.equal("dido");
         
-    }); */
+    });
 
     it("Debe eliminar un usuario existente", async () => {
         let userToDltId = "659723f82a3e5517e8a553d2" //Id del usuario que se quire eliminar

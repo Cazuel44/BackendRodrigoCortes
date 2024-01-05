@@ -38,10 +38,10 @@ describe("Testing Products", () => {
 
         const result = await productModel.create(mockProduct);
 
-        // Verificar si el producto agregado tiene un campo _id (Mocha)
+        // verificar si el producto agregado tiene un campo _id (Mocha)
         assert.ok(result._id);
 
-        // Verificar si el producto agregado tiene un campo _id (Chai)
+        // verificar si el producto agregado tiene un campo _id (Chai)
         expect(result).to.have.property('_id');
     });
 
@@ -60,10 +60,10 @@ describe("Testing Products", () => {
 
         const result = await productModel.findByIdAndUpdate(prodId, mockProductUpd, { new: true });
 
-        // Verificar si el resultado es un objeto (Mocha)
+        // verificar si el resultado es un objeto (Mocha)
         assert.strictEqual(typeof result, "object");
 
-        // Verificar si el resultado es un objeto (Chai)
+        // verificar si el resultado es un objeto (Chai)
         expect(result).to.be.an('object');
     });
 
@@ -72,10 +72,10 @@ describe("Testing Products", () => {
 
         const result = await productModel.findByIdAndDelete(prodIdToDelete);
 
-        // Verificar si el resultado de eliminar es un objeto (Mocha)
+        // verificar si el resultado de eliminar es un objeto (Mocha)
         assert.strictEqual(typeof result, "object");
 
-        // Verificar si el resultado de eliminar es un objeto (Chai)
+        // verificar si el resultado de eliminar es un objeto (Chai)
         expect(result).to.be.an('object');
     });
 })
