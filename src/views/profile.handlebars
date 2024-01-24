@@ -15,6 +15,20 @@
         <p>Rol: {{rol}}</p>
         <h4><a href="/allproducts">Ver todos los productos</a></h4>
         <h4><a href="/logout">Cerrar sesion</a></h4>
+
+         {{#ifCond rol '===' 'admin'}}
+            <!-- Contenido específico para el rol de administrador -->
+            <p>¡Eres un administrador! Puedes ver información adicional.</p>
+            <h2>Lista de Usuarios:</h2>
+            <hr>
+        <ul>
+            {{#each users}}
+                <li>{{this.nombre}}  - {{this.email}} - {{this.rol}} <button id="btnChangeRol-{{this._id}}">cambiar rol</button> <button id="deleteUser">eliminar usuario</button></li>
+            {{/each}}
+        </ul>
+        {{/ifCond}}
     </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/scripts.js"></script>
 </body>
 </html>

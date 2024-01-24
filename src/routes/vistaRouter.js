@@ -108,23 +108,25 @@ router.get("/reset_password/:token", authToken, async (req, res) => {
     }
 }); */
 
-router.get("/profile", async (req, res) => {
+router.get("/profile", passport.authenticate("current", { session: false }), async (req, res) => {
+
+    const nombre = req.user.nombre;
+    const email = req.user.email;
+    const rol = req.user.rol;
+    
     try {
-      // Asegúrate de tener acceso a los datos necesarios, como el nombre y el email del usuario
-      const nombre = req.session.nombreUsuario;
-      const apellido = req.session.apellidoUsuario;
-      const email = req.session.emailUsuario;
-      const rol = req.session.rolUsuario;
-  
-      // Renderiza la vista profile y pasa los datos como un objeto
-      res.render("profile", {
-        nombre: nombre,
-        apellido: apellido, 
-        email: email,
-        rol: rol
-      });
+        // Obtener todos los usuarios de la base de datos
+        let users = await userModel.find().lean();
+
+        // Renderizar la vista profile y pasar datos como un objeto
+        res.render("profile", {
+            nombre: nombre,
+            email: email,
+            rol: rol,
+            users: users // Agregar la lista de usuarios al objeto que se pasa a la vista
+        });
     } catch (error) {
-      console.log("Error al acceder a la vista de perfil:", error);
+        console.log("Error al acceder a la vista de perfil:", error);
     }
 });
 

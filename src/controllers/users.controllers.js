@@ -23,7 +23,7 @@ async function getUserByEmail(email) {
 // obtener todos los usuarios
 async function getAllUsers(req, res) {
   try {
-    let users = await userModel.find();
+    let users = await userModel.find({}, "nombre email rol");
     res.send({ result: "success", payload: users });
   } catch (error) {
     console.log(error);
@@ -131,6 +131,7 @@ async function loginUser(req, res) {
     logger.info("Inicio de sesión exitoso para el usuario: " + user.email);
     logger.info("Token generado para el usuario: " + token);
     logger.info("rol del usuario: " + user.rol);
+    logger.info("Ultima conexion" + user.last_connection)
     // consolelog de usuario y token
     /* console.log("token desde usercontrolers",token)
     console.log(user) */
@@ -221,6 +222,40 @@ async function deleteUser(req, res) {
   } catch (error) {
     console.error(error);
     res.status(500).json({ status: "error", error: "Error al eliminar el usuario" });
+  }
+}
+
+//ruta para eliminar todos los usuarios que no tengas conexion en los ultimos 2 dias 
+async function deleteUsers(req, res) {
+  //define el numero de dias inactivo
+  const inactiveTime = 2
+
+  //fecha limite por inactividad se descuenta el inactivetime a limitdate que se inicializa con la fecha actual
+  const limitDate = new Date();
+  limitDate.setDate(limitDate.getDate() - inactiveTime);
+  //intenta
+  try {
+    
+    //obtiene todos los usuarios desde la base de datos que la ultima conexion  supera los 2 dias
+    let inactiveUsers = await userModel.find({last_connection:{$lt: limitDate}});
+    // se realiza verificacion si los usuarios obtenidos de la base de datos por inactividad es mayor a 0 si es asi los elimina
+    if(inactiveUsers.length > 0){
+
+      //elimina los usuarios almacenados en inactiveUsers
+      await userModel.deleteMany({_id:{$in: inactiveUsers.map(user => user._id)}}) 
+
+      // Elimina los carritos asociados a los usuarios eliminados utilizando el cartId de cada usuario
+      await cartModel.deleteMany({ _id: { $in: inactiveUsers.map(user => user.cartId) } });
+      
+      logger.warn("Usuarios eliminados:" + inactiveUsers)
+      res.status(200).json("Usuarios eliminados con exito!");
+    } else {
+      res.json({message: "no hay usuarios inactivos para eliminar"})
+    }
+    
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: "error", error: "Error al eliminar los usuarios inactivos" });
   }
 }
 
@@ -401,6 +436,7 @@ module.exports = {
   updatePasswordByEmail,
   changeRol,
   uploadDocuments,
+  deleteUsers,
 };
 
 

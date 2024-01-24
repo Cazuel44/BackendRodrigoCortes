@@ -17,6 +17,7 @@ router.delete("/users/:uid", usersControllers.deleteUser);
 router.post("/recoverypass", usersControllers.recuperacionCorreo);
 router.post("/actualizar-pass", usersControllers.updatePasswordByEmail)
 router.post("/api/users/premium/:uid", usersControllers.changeRol)
+router.delete("/users", usersControllers.deleteUsers)
 
 router.post("/api/users/:uid/documents", upload.fields([ 
     { name: "identificationImage", maxCount: 1 }, 

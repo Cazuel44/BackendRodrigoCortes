@@ -369,6 +369,53 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  const btnChangeRoles = document.querySelectorAll("[id^='btnChangeRol-']");
+  if(btnChangeRoles){
+    btnChangeRoles.forEach(btnChangeRol => {
+      btnChangeRol.addEventListener("click", function(event) {
+        // Extraer el ID del usuario del identificador del botón
+        const userId = event.target.id.split("-")[1];
+      
+        // Llamas a la función para cambiar el rol mediante una solicitud al servidor
+        cambiarRolUsuario(userId);
+      });
+    });
+  }
+
+
+  async function cambiarRolUsuario(userId) {
+    console.log("funcandoooo")
+    try {
+      // Realizas una solicitud POST al servidor
+      const response = await fetch(`/api/users/premium/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        /* alert(errorData.message) */
+        throw new Error(`Error al cambiar el rol del usuario: ${JSON.stringify(errorData)}`);
+        
+      }
+  
+      // Maneja la respuesta del servidor si es necesario
+      const data = await response.json();
+      console.log(data);
+  
+      // Puedes realizar acciones adicionales en el cliente si es necesario
+    } catch (error) {
+      console.error(error.message);
+      /* alert("Error al cambiar el rol del usuario. " + error.message); */
+      alert(error.message);
+    }
+  }
 });
 
 

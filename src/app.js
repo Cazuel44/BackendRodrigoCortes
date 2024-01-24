@@ -25,8 +25,9 @@ const GitHubStrategy = require("passport-github2");
 const cookieParser = require("cookie-parser"); //revisar si funciona
 const { Contacts, Users, Carts, Products } = require("./dao/factory");
 const loggerMiddleware = require("./loggerMiddleware.js");
-const swaggerUiExpress = require("swagger-ui-express")
-const swaggerJsdoc = require("swagger-jsdoc")
+const swaggerUiExpress = require("swagger-ui-express");
+const swaggerJsdoc = require("swagger-jsdoc");
+const helpers = require("./helpers/helpers.js")
 
 
 const app = express()
@@ -125,7 +126,8 @@ app.use("/", mockingproducts);
 
 
 //Configuración de handlebars
-app.engine("handlebars", handlebars.engine());
+/* app.engine("handlebars", handlebars.engine()); */
+app.engine("handlebars",handlebars.engine({helpers: helpers,}));
 
 //Usa handlebars como motor de plantillas
 app.set("view engine", "handlebars");
