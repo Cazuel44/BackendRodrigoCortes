@@ -62,7 +62,7 @@ const swaggerOptions = {
   apis: [
     './src/docs/products/*.yaml', // Ruta válida usando wildcard
     './src/docs/carts/*.yaml', // Ruta válida usando wildcard
-    // ...otras definiciones de rutas
+    // mas definiciones de rutas en caso que se requiera
   ],
 };
 
@@ -97,7 +97,7 @@ app.use(express.static(path.join(__dirname, "public"))) */
 
 
 // Configuración del middleware de sesión con MongoDB
-app.use(session({
+/* app.use(session({
   store: MongoStore.create({
     mongoUrl: "mongodb+srv://rodrigo:Rodrigocoderhouse@cluster0.unz3ypw.mongodb.net/ecommerce?retryWrites=true&w=majority",
     mongoOptions: { useNewUrlParser: true, useUnifiedTopology: true }, ttl: 3500
@@ -106,7 +106,7 @@ app.use(session({
   resave: false,
   saveUninitialized: true
 }));
-
+ */
 //uso PASSPORT
 initializePassport();
 
