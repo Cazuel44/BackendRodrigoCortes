@@ -97,7 +97,7 @@ app.use(express.static(path.join(__dirname, "public"))) */
 
 
 // Configuración del middleware de sesión con MongoDB
-/* app.use(session({
+app.use(session({
   store: MongoStore.create({
     mongoUrl: "mongodb+srv://rodrigo:Rodrigocoderhouse@cluster0.unz3ypw.mongodb.net/ecommerce?retryWrites=true&w=majority",
     mongoOptions: { useNewUrlParser: true, useUnifiedTopology: true }, ttl: 3500
@@ -106,7 +106,7 @@ app.use(express.static(path.join(__dirname, "public"))) */
   resave: false,
   saveUninitialized: true
 }));
- */
+
 //uso PASSPORT
 initializePassport();
 
