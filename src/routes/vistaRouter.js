@@ -78,6 +78,20 @@ router.get("/allproducts", passport.authenticate("current", { session: false })/
 
 
 
+router.get("/product/:pid", passport.authenticate("current", { session: false }), async (req, res) => {
+    try {
+      const user = req.user;
+      
+      // Obtén el carrito del usuario
+      const userCart = await cartModel.findById(user.cartId);
+  
+      res.render("productDetail", { user, userCart, cartId: user.cartId });
+    } catch (error) {
+      res.status(500).json({ message: "Error al cargar la página" });
+    }
+});
+
+
 
 router.get("/login", async (req, res)=>{
     try{

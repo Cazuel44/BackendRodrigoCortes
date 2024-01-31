@@ -23,6 +23,7 @@ socket.on('deleteProduct', (id) => {
   
 });
 
+
 document.addEventListener("DOMContentLoaded", () => {
 
   // EVENTO ENVIAR FORMULARIO REGISTRO
@@ -30,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   //EVENTO BOTON DETALLE
   // busca los botones con clase detalle-buton
-  const detalleButtons = document.querySelectorAll(".detalle-button");
+  /* const detalleButtons = document.querySelectorAll(".detalle-button");
   // agregar un evenlistener
   detalleButtons.forEach((button) => {
     
@@ -39,10 +40,83 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = `/product/${productId}`;
     });
 
-  }); 
+  });  */
 
+  //DETALLE DE PRODUCTOS CON FETCH
 
+  const detalleButtons = document.querySelectorAll(".detalle-button");
 
+  async function detailProductBtn(productId) {
+    try {
+      const userResponse = await fetch(`/product/${productId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (userResponse.ok) {
+        // Si la respuesta es exitosa, redirige al usuario al detalle del producto
+        window.location.href = `/product/${productId}`;
+      } else {
+        // Si la respuesta no es exitosa, maneja el caso de no autorizado u otros errores
+        console.error("Error al acceder a la ruta protegida:", userResponse.statusText);
+        // Puedes mostrar un mensaje al usuario o manejar de otra manera
+      }
+    } catch (error) {
+      console.error('Error al obtener el ID del carrito:', error);
+    }
+  }
+
+  if (detalleButtons) {
+    detalleButtons.forEach((button) => {
+      button.addEventListener("click", function (event) {
+        const productId = event.currentTarget.dataset.productId;
+        detailProductBtn(productId);
+      });
+    });
+  }
+  
+  
+
+  // AGREGAR UN PRODUCTO AL CARRITO
+
+  const addToCartBtn = document.getElementById("addToCartBtn");
+  if (addToCartBtn) {
+    addToCartBtn.addEventListener("click", async function (event) {
+      const productId = window.location.pathname.split("/").pop();
+  
+      // Obtener el token directamente de la cookie
+      const token = document.cookie.split(';').find(cookie => cookie.trim().startsWith('token='));
+      
+      try {
+        const response = await fetch(`/api/carts/products/${productId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token ? token.split('=')[1] : ''}`,
+          },
+          body: JSON.stringify([{ productId: productId, quantity: 1 }]),
+        });
+  
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Error al agregar producto al carrito:', errorData);
+          alert("error al agregar el producto intenta mas tarde")
+        } else {
+          const result = await response.json();
+          console.log('Producto agregado al carrito:', result);
+          alert("Producto agregado con exito")
+          
+        }
+      } catch (error) {
+        console.error('Error al procesar la solicitud:', error);
+        
+      }
+    });
+  }
+
+  // DETALLE DEL CARRITO DEL USUARIO
   const carritoBtn = document.getElementById("carrito-compra");
 
   async function obtenerIdCarrito() {
@@ -385,7 +459,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   async function cambiarRolUsuario(userId) {
-    console.log("funcandoooo")
+    
     try {
       // Realizas una solicitud POST al servidor
       const response = await fetch(`/api/users/premium/${userId}`, {
@@ -416,6 +490,140 @@ document.addEventListener("DOMContentLoaded", () => {
       alert(error.message);
     }
   }
+
+
+  const btnDeleteUser = document.querySelectorAll("[id^='btnDeleteUser-']");
+  if(btnDeleteUser){
+    btnDeleteUser.forEach(btnDeleteUser => {
+      btnDeleteUser.addEventListener("click", function(event) {
+        // Extraer el ID del usuario del identificador del botón
+        const userId = event.target.id.split("-")[1];
+      
+        // Llamas a la función para cambiar el rol mediante una solicitud al servidor
+        btnDeleteuserProfile(userId);
+      });
+    });
+  }
+
+
+  async function btnDeleteuserProfile(userId) {
+    console.log("funcandoooo")
+    try {
+      // Realizas una solicitud POST al servidor
+      const response = await fetch(`/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        /* alert(errorData.message) */
+        throw new Error(`Error al eliminar usuario: ${JSON.stringify(errorData)}`);
+        
+      }
+
+      // Elimina el usuario de la lista en el DOM
+      const userElement = document.getElementById(`btnDeleteUser-${userId}`);
+      if (userElement) {
+        console.log("Eliminandoooo")
+        userElement.closest('li').remove(); 
+      }
+  
+      // Maneja la respuesta del servidor si es necesario
+      const data = await response.json();
+      console.log(data);
+  
+     
+    } catch (error) {
+      console.error(error.message);
+      /* alert("Error al cambiar el rol del usuario. " + error.message); */
+      alert(error.message);
+    }
+  }
+
+  const purchaseBtn = document.getElementById("purchaseBtn");
+
+  if (purchaseBtn) {
+    purchaseBtn.addEventListener("click", async function () {
+      try {
+        const token = document.cookie.split(';').find(cookie => cookie.trim().startsWith('token='));
+        const response = await fetch("/api/carts/purchase", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            'Authorization': `Bearer ${token ? token.split('=')[1] : ''}`,
+          },
+        });
+        const data = await response.json();
+        if (response.ok) {
+            // Éxito en la compra
+            console.log("Compra exitosa:", data);
+            // Ocultar el botón de compra
+            purchaseBtn.style.display = "none";
+            // Mostrar el contenedor de detalles del ticket
+            const ticketContainer = document.getElementById("ticketContainer");
+            if (ticketContainer && data.ticket) {
+              ticketContainer.style.display = "block";
+              // Actualizar el contenido del contenedor con los detalles del ticket
+              ticketContainer.innerHTML = `
+                <h2>Detalles del Ticket:</h2>
+                <p>Código: ${data.ticket.code}</p>
+                <p>Total: ${data.ticket.amount}</p>
+                <!-- Mostrar otros detalles del ticket según sea necesario -->
+              `;
+            } else {
+              console.error("Error en la respuesta del servidor:", data);
+            }
+        } else {
+          // Manejar error en la compra
+          console.error("Error en la compra:", data);
+          // Puedes mostrar un mensaje de error al usuario
+        }
+      } catch (error) {
+        console.error("Error al procesar la compra:", error);
+        // Puedes mostrar un mensaje de error al usuario
+      }
+    });
+  }
+
+
+
+  /* const btnPurchase = document.getElementById("purchaseBtn")
+  if (btnPurchase) {
+    btnPurchase.addEventListener("click", async function () {
+      try {
+
+        // Obtener el token directamente de la cookie
+        const token = document.cookie.split(';').find(cookie => cookie.trim().startsWith('token='));
+        const response = await fetch("/api/carts/purchase", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${token ? token.split('=')[1] : ''}`,
+            },
+        });
+        const data = await response.json();
+        if (response.ok) {
+          // Éxito en la compra
+          console.log("Compra exitosa:", data);
+          // Puedes redirigir al usuario o realizar otras acciones después de la compra
+        } else {
+          // Manejar error en la compra
+          console.error("Error en la compra:", data);
+          // Puedes mostrar un mensaje de error al usuario
+        }
+      } catch (error) {
+        console.error("Error al procesar la compra:", error);
+        // Puedes mostrar un mensaje de error al usuario
+      }
+    });
+  } */
+
 });
 
 

@@ -10,6 +10,7 @@ const jwt = require("jsonwebtoken")
 const { getUserByEmail } = require("./users.controllers.js");
 const {userDao} = require("./users.controllers.js")// verificar si es necesario
 const logger = require("../logger.js");
+const { ObjectId } = require('mongodb');
 
 
 
@@ -126,19 +127,81 @@ async function isvalidcart(cart){
    
 }
 
-async function isValidCartId(id){
+/* async function isValidCartId(id){
     if(typeof id !== "string"){
         return false;
     }
     return true;
+} */
+
+async function isValidCartId(id) {
+    try {
+        const objectId = new ObjectId(id);
+        return true;
+    } catch (error) {
+        return false;
+    }
 }
 
-//FUNCION PARA AGREGAR VARIOS PRODUCTOS AL CARRITO 
+
+
+//FUNCION PARA AGREGAR VARIOS PRODUCTOS AL CARRITO  (agrega 1 o mas productos)
+
 async function addProductsToCart(req, res) {
     try {
-        const cartId = req.params.cid;
+        const cartId = req.user.carrito;
+        const products = req.body;
+
+        // Verifica si 'products' es un array y no está vacío
+        if (!Array.isArray(products) || products.length === 0) {
+            logger.warn("Formato de productos no válido");
+            return res.status(400).json({ message: "Formato de productos no válido" });
+        }
+
+        // Valida el ID del carrito
+        if (!(await isValidCartId(cartId))) {
+            logger.error("ID de carrito no válido");
+            throw new AddProductToCart("ID de carrito no válido", 400);
+        }
+
+        // Valida si el carrito existe
+        if (!(await isvalidcart(cartId))) {
+            logger.error("El carrito no existe");
+            throw new AddProductToCart("El carrito no existe", 404);
+        }
+
+        // Inicializa el carrito si es nulo
+        if (!req.user.cart) {
+            req.user.cart = { products: [] };
+        }
+
+        // Asigna el nuevo objeto cart al campo cart del usuario
+        const cart = req.user.cart;
+
+        // Llama a la función de DAO para agregar productos al carrito 
+        const result = await cartDao.addProductsToCart(cartId, products);
+        return res.json(result);
+    } catch (error) {
+        if (error instanceof AddProductToCart) {
+            console.error("Error al agregar productos al carrito:", error.message);
+            return res.status(error.statusCode).json({ status: 'error', error: error.message });
+        } else {
+            logger.error("Algo salió mal, inténtalo más tarde:", error);
+            console.error(error);
+            return res.status(500).json({ status: "error", error: "Algo salió mal, inténtalo más tarde:" });
+        }
+    }
+}
+
+
+//CODIGO FUNCIONANDO PERO INGRESA EL MISMO PRODUCTO VARIAS VECES
+/* async function addProductsToCart(req, res) {
+    try {
+        const cartId = req.user.carrito;
+        console.log(cartId)
         const products = req.body; // Espera un array de productos
         const user = req.user; //obtiene info del usuario autenticado
+        console.log(user)
 
         // Verifica si products es un array y no está vacío
         if (!Array.isArray(products) || products.length === 0) {
@@ -174,7 +237,7 @@ async function addProductsToCart(req, res) {
             }
         }
 
-        // Llama a la función de DAO para agregar productos al carrito
+        // Llama a la función de DAO para agregar productos al carrito 
         const result = await cartDao.addProductsToCart(cartId, products);
         return res.json(result);
     } catch (error) {
@@ -188,7 +251,7 @@ async function addProductsToCart(req, res) {
         }
     }
 }
-
+ */
 
 //para agregar un solo producto al carrito
 /* async function addProductToCart(req, res) {
@@ -266,13 +329,14 @@ function generateUniqueCode() {
 
 //completar compra del carrito
 async function purchaseProducts(req, res) {
-    const cartId = req.params.cid;
+    /* const cartId = req.params.cid; */
+    const cartId = req.user.carrito
     const userEmail = req.user.email;
 
     try {
         // Lógica para obtener los productos del carrito...
         const cartProducts = await cartDao.getCartProducts(cartId); // Función para obtener los productos del carrito
-        
+        console.log(cartProducts)
         // Verificar el stock de cada producto en el carrito en la base de datos
         const stock = await cartDao.checkStock(cartProducts);
 
@@ -288,7 +352,7 @@ async function purchaseProducts(req, res) {
             code: generateUniqueCode(),
             purchaser: userEmail,
             amount: total,
-            products: cartProducts, // Aquí irían los productos del carrito
+            products: /* cartProducts,  */ cartProducts.map(cartProduct => cartProduct.product._id),// Aquí irían los productos del carrito
             purchase_datetime: currentDate, 
             
         };
@@ -311,12 +375,32 @@ async function purchaseProducts(req, res) {
 
 function calculateTotal(cartProducts) {
     let total = 0;
-    for (const product of cartProducts) {
-        // Suponiendo que cada producto tiene un campo de 'price'
-        total += product.price * product.quantity;
+
+    for (const cartProduct of cartProducts) {
+        const product = cartProduct.product;
+
+        // Verifica si el producto tiene un campo de 'price' y 'quantity'
+        if (product && product.price && cartProduct.quantity) {
+            total += product.price * cartProduct.quantity;
+        } else {
+            console.error(`Error: Producto inválido en el carrito: ${JSON.stringify(cartProduct)}`);
+        }
     }
+
     return total;
 }
+
+/* function calculateTotal(cartProducts) {
+    let total = 0;
+    for (const product of cartProducts) {
+        // Suponiendo que cada producto tiene un campo de price y un quantity
+        total += product.price * product.quantity;
+        console.log(product.price)
+        console.log(product.quantity)
+    }
+    
+    return total;
+} */
 
 module.exports = {
     /* getCartById, */
@@ -381,3 +465,6 @@ module.exports = {
         }
     }
 } */
+
+
+

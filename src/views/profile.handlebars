@@ -23,7 +23,7 @@
             <hr>
         <ul>
             {{#each users}}
-                <li>{{this.nombre}}  - {{this.email}} - {{this.rol}} <button id="btnChangeRol-{{this._id}}">cambiar rol</button> <button id="deleteUser">eliminar usuario</button></li>
+                <li>{{this.nombre}}  - {{this.email}} - {{this.rol}} <button id="btnChangeRol-{{this._id}}">cambiar rol</button> <button id="btnDeleteUser-{{this._id}}">eliminar usuario</button></li>
             {{/each}}
         </ul>
         {{/ifCond}}

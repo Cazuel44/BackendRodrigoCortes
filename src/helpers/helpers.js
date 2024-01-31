@@ -23,5 +23,5 @@ module.exports = {
           return options.inverse(this);
       }
     },
-    // Otros helpers...
+    // Otros handlebar helpers...
 };

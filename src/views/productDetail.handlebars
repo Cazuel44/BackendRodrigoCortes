@@ -6,6 +6,7 @@
     <title>Detalles de producto</title>
 </head>
 <body>
+    
     <h1>Detalles del Producto</h1>
     <div>
         <h2>{{product.title}}</h2>
@@ -16,10 +17,13 @@
         <p>Categoría: {{product.category}}</p>
         {{!-- <p>Miniaturas: {{product.thumbnails}}</p> --}}
         <p>Cantidad: {{product.quantity}}</p>
-        <button>Agregar al carrito</button>
+        <button id="addToCartBtn">Agregar al carrito</button>
+        
     </div>
+    <a href="/allproducts">Todos los productos</a>
     
-    {{!-- AGREGAR UN BOTON O UN LINK PARA VOLVER A VER TODOS LOS PRODUCTOS PERO DESPUES PORQUE NO LO PIDE LA TAREA --}}
-
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/scripts.js"></script>
 </body>
 </html>

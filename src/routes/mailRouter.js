@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 
 
 router.post("/enviar-correo", (req, res) => {
-    const { email, mensaje } = req.body; // Cambia 'correo' a 'email' para mantener la consistencia
+    const { email, mensaje } = req.body; 
     const messageToSend = mensaje; // Utiliza el mensaje del cuerpo de la solicitud
 
     const mailOptions = {

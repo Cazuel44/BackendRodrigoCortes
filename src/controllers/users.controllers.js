@@ -150,14 +150,25 @@ async function getUserInfo(req, res) {
   res.json({ user });
 }
 
+
 async function logoutUser(req, res) {
+  
+  // Invalidar el token estableciendo una fecha de expiracion
+  res.cookie("token", "", { expires: new Date(0) });
+
+  // Redireccionar o enviar una respuesta según sea necesario
+  res.redirect("../../login");
+}
+
+// ESTE LOGOUT ES PARA TRABAJAR CON SESSIONS EN ESTE CASO NO SE UTILIZA
+/* async function logoutUser(req, res) {
   req.session.destroy((error) => {
     if (error) {
       return res.json({ status: "Error al desconectarse", body: error });
     }
     res.redirect("../../login");
   });
-}
+} */
 
 async function updateUser(req, res) {
   const { uid } = req.params;
@@ -246,6 +257,24 @@ async function deleteUsers(req, res) {
 
       // Elimina los carritos asociados a los usuarios eliminados utilizando el cartId de cada usuario
       await cartModel.deleteMany({ _id: { $in: inactiveUsers.map(user => user.cartId) } });
+
+      // ENVÍO DE CORREO AL USUARIO ELIMINADO
+      for (const usuario of inactiveUsers) {
+        // Contenido del email
+        const mailOptions = {  
+          from: process.env.EMAIL_USER,
+          to: usuario.email,
+          subject: 'Cuenta eliminada',
+          text: `Saludos ${usuario.nombre},\n\nEste correo es informativo, por el tiempo inactivo en nuestra aplicación, su cuenta sera eliminada de nuestra base de datos. \n\n BABAI `,
+        };
+
+        // Enviar el correo
+        transporter.sendMail(mailOptions, (error) => {
+          if (error) {
+            console.error(error);
+          }
+        });
+      }
       
       logger.warn("Usuarios eliminados:" + inactiveUsers)
       res.status(200).json("Usuarios eliminados con exito!");

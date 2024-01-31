@@ -97,8 +97,8 @@ server.listen(PORT, ()=>{
 app.use(express.static(path.join(__dirname, "public"))) */
 
 
-// Configuración del middleware de sesión con MongoDB
-app.use(session({
+// Configuración del middleware de sesión con MongoDB... NO SE UTILIZA EN EL PROYECTO PERO LA CONFIG ESTA BIEN
+/* app.use(session({
   store: MongoStore.create({
     mongoUrl: "mongodb+srv://rodrigo:Rodrigocoderhouse@cluster0.unz3ypw.mongodb.net/ecommerce?retryWrites=true&w=majority",
     mongoOptions: { useNewUrlParser: true, useUnifiedTopology: true }, ttl: 3500
@@ -106,14 +106,14 @@ app.use(session({
   secret: "clavesecreta",
   resave: false,
   saveUninitialized: true
-}));
+})); */
 
 //uso PASSPORT
 initializePassport();
 
 //RUTAS
 app.use(passport.initialize())
-app.use(passport.session());
+/* app.use(passport.session()); */ // PERTENECE AL MIDLEWARE DE SESSIONS QUE NO SE OCUPA EN EL PROYECTO YA QUE SE TRABAJA CON JSON WEB TOKEN
 app.use("/", cartRouter);
 app.use("/", productsRouter); 
 app.use("/", vistaRouter);

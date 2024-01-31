@@ -1,6 +1,7 @@
 const ProductDao = require("../dao/mongo/products.mongo"); // Importa el DAO de productos
 const { ProductCreationError } = require("../Errors/customErrors.js");
 const logger = require("../logger.js");
+const { transporter } = require("../routes/mailRouter");
 
 
 // se instancia la clase de productos
@@ -169,10 +170,30 @@ const deleteProduct = async (req, res) => {
         if (!product) {
             return res.status(404).json({ message: "Producto no encontrado" });
         }
-
+        
         // verifica si el usuario creo el producto
         if (user.rol === "premium" && product.owner !== user.email) {
             return res.status(403).json({ message: "No tienes permisos para eliminar este producto" });
+        }
+
+        if(product.owner !== "user"){
+
+            // ENVÍO DE CORREO AL USUARIO CREADOR DEL PRODUCTO
+            
+            // Contenido del email
+            const mailOptions = {  
+                from: process.env.EMAIL_USER,
+                to: product.owner,
+                subject: 'Producto eliminado',
+                text: `Saludos ${user.nombre},\n\nEste correo es informativo, su producto ${product.title}-${product.description} ha sido eliminado de nuestra base de datos. \n\n BABAI `,
+            };
+        
+            // Enviar el correo
+            transporter.sendMail(mailOptions, (error) => {
+                if (error) {
+                    console.error(error);
+                }
+            });   
         }
 
         const result = await productDao.deleteProduct(productId);

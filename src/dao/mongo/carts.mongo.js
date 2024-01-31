@@ -72,8 +72,50 @@ class CartDao {
             return null;
         }
     }
-
+    //LA LOGICA PARA REVISAR SI UN PRODUCTO YA EXISTE EN EL CARRITO SE AGREGA EN EL DAO
     async addProductsToCart(cartId, products) {
+        try {
+            const cart = await cartModel.findById(cartId);
+            if (!cart) {
+                return { success: false, message: 'Carrito no encontrado' };
+            }
+    
+            // Verificar si products es un array
+            if (Array.isArray(products)) {
+                for (const productData of products) {
+                    const productId = productData.productId;
+                    const quantity = productData.quantity;
+    
+                    const existingProductIndex = cart.products.findIndex(p => p.product.toString() === productId.toString());
+    
+                    if (existingProductIndex !== -1) {
+                        // El producto ya está en el carrito, actualiza cantidad
+                        cart.products[existingProductIndex].quantity += quantity;
+                    } else {
+                        // El producto no está en el carrito, agrégalo
+                        const product = await productModel.findById(productId);
+                        if (!product) {
+                            return { success: false, message: `Producto ${productId} no encontrado` };
+                        }
+    
+                        cart.products.push({ product: productId, quantity });
+                    }
+                }
+            } else {
+                // Manejar si products no es un array
+                return { success: false, message: 'Formato de productos no válido' };
+            }
+    
+            await cart.save();
+    
+            return { success: true, message: 'Productos agregados al carrito con cantidad' };
+        } catch (error) {
+            console.error(error);
+            return { success: false, message: 'Error al agregar productos al carrito con cantidad' };
+        }
+    }
+
+    /* async addProductsToCart(cartId, products) {
         try {
             const cart = await cartModel.findById(cartId);
             if (!cart) {
@@ -106,30 +148,9 @@ class CartDao {
             console.error(error);
             return { success: false, message: 'Error al agregar productos al carrito con cantidad' };
         }
-    }
-
-    /* async addProductToCart(cartId, productIds) {
-        try {
-            const cart = await cartModel.findById(cartId);
-            if (!cart) {
-                return { success: false, message: 'Carrito no encontrado' };
-            }
-            
-            const products = await productModel.find({ _id: { $in: productIds } });
-            if (products.length !== productIds.length) {
-                return { success: false, message: 'Uno o varios productos no se encontraron' };
-            }
-    
-            // Agregar los IDs de los productos al carrito
-            cart.products.push(...productIds);
-            await cart.save();
-    
-            return { success: true, message: 'Producto(s) agregado(s) al carrito' };
-        } catch (error) {
-            console.error(error);
-            return { success: false, message: 'Error al agregar producto(s) al carrito' };
-        }
     } */
+
+    
     // ALPARECER esta funcion esta demas se debe realizar en caso de repetir el producto agregado la verificacion en addproduct
     async updateProductQuantity(cartId, productId, newQuantity) {
         try {
@@ -225,7 +246,34 @@ class CartDao {
     }
 
     // FUNCIONES DE CARTPURCHASE GETCARPRODUCT CHECKPRODUCTSINDB CHECKSTOCK CREATETICKET
+
     async getCartProducts(cartId) {
+        try {
+            const cart = await cartModel.findById(cartId);
+            const productsInCart = cart.products.map(async productData => {
+                const productId = productData.product;
+                const quantity = productData.quantity;
+    
+                // Busca el producto completo por su ID
+                const fullProduct = await productModel.findById(productId);
+    
+                // Devuelve un objeto con la información del producto y la cantidad en el carrito
+                return {
+                    product: fullProduct,
+                    quantity: quantity
+                };
+            });
+    
+            // Espera a que todas las promesas en el array se resuelvan
+            const products = await Promise.all(productsInCart);
+    
+            return products;
+        } catch (error) {
+            console.error('Error al obtener productos del carrito:', error);
+            throw error;
+        }
+    }
+    /* async getCartProducts(cartId) {
         try {
             const cart = await cartModel.findById(cartId);
             const productIds = cart.products.map(product => product.product);
@@ -239,7 +287,7 @@ class CartDao {
             console.error('Error al obtener productos del carrito:', error);
             throw error;
         }
-    }
+    } */
     
     // Función para verificar los IDs de los productos en la base de datos
     async checkProductIdsInDB(productIds) {
@@ -251,8 +299,48 @@ class CartDao {
             throw error;
         }
     }
-    
+
     async checkStock(cartProducts) {
+        try {
+            console.log("productos del carrito", cartProducts);
+    
+            for (const cartProduct of cartProducts) {
+                const product = cartProduct.product;
+                const quantity = cartProduct.quantity;
+    
+                console.log(`Verificando stock para producto ${product._id}`);
+    
+                const productInDB = await productModel.findById(product._id);
+    
+                if (!productInDB) {
+                    console.log(`Producto ${product._id} no encontrado en la base de datos`);
+                    return { success: false, message: "Producto no encontrado" };
+                }
+    
+                const availableStock = productInDB.stock;
+    
+                if (quantity > availableStock) {
+                    console.log(`Stock insuficiente para ${productInDB.title}`);
+                    return { success: false, message: `Stock insuficiente para ${productInDB.title}` };
+                }
+    
+                console.log(`Stock suficiente para ${productInDB.title}. Stock disponible: ${availableStock}`);
+    
+                // Restar la cantidad del carrito al stock del producto en la base de datos
+                console.log(`Stock antes de la actualización para ${productInDB.title}: ${productInDB.stock}`);
+                productInDB.stock -= quantity;
+                await productInDB.save();
+                console.log(`Stock después de la actualización para ${productInDB.title}: ${productInDB.stock}`);
+            }
+    
+            return { success: true, message: 'Stock disponible para todos los productos' };
+        } catch (error) {
+            console.error('Error al verificar el stock de productos:', error);
+            throw error;
+        }
+    }
+    
+    /* async checkStock(cartProducts) {
         try {
             console.log("productos del carrito", cartProducts);
             for (const product of cartProducts) {
@@ -286,7 +374,7 @@ class CartDao {
             console.error('Error al verificar el stock de productos:', error);
             throw error;
         }
-    }
+    } */
 
     async createTicket(ticketData) {
         try {
